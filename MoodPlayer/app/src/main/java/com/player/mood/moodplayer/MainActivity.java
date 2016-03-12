@@ -1,5 +1,7 @@
 package com.player.mood.moodplayer;
 
+import android.content.Intent;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -8,8 +10,15 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.ImageButton;
+
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
+
+    // Control Buttons
+    private Button playButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +35,18 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+
+        playButton = (Button) findViewById(R.id.play_button);
+        playButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                /*Start MoodPlayer*/
+                Intent i = new Intent(MainActivity.this, PlayerActivity.class);
+                // startActivityForResult(i, 3);
+                startActivity(i);
+            }
+        });
+
     }
 
     @Override
