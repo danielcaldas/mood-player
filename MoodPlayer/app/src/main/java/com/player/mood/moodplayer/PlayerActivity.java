@@ -1,5 +1,9 @@
 package com.player.mood.moodplayer;
 
+import android.content.Context;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.Resources;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -13,10 +17,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.os.Handler;
 
+import com.echonest.api.v4.EchoNestAPI;
+import com.echonest.api.v4.EchoNestException;
+import com.echonest.api.v4.Song;
+import com.echonest.api.v4.SongParams;
 import com.player.mood.moodplayer.bitalino.comm.BITalinoFrame;
 import com.player.mood.moodplayer.bitalino.deviceandroid.BitalinoAndroidDevice;
+import com.player.mood.moodplayer.funcmode.BeastMode;
+import com.player.mood.moodplayer.funcmode.FuncMode;
+import com.player.mood.moodplayer.funcmode.RelaxedMode;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -29,7 +44,10 @@ public class PlayerActivity extends AppCompatActivity {
     private static final int N_FRAMES = 100;
     private static final int DEFAULT_FREQ = 1000;
     private static final int MUSCLE_MEAN = 500;
+    private static float GLOBAL_ENERGY;
+    private static int PREVIOUS_MEAN_EDA=-1;
 
+    private FuncMode functioningMode;
 
     private static final int MUSCLE_PICK = 150;
     private static int EDA_PICK = 900;
@@ -40,9 +58,7 @@ public class PlayerActivity extends AppCompatActivity {
     private static int MIN_MUSIC_INDEX = 0;
 
     private static String DEFAULT_MUSIC_TITLE = "Just squeeze your arm!";
-
-    private static ArrayList<String> songsTitles;
-    private static int[] songsList;
+    private static String CURRENT_SONG;
 
     // View
     private ImageButton playStopButton;
@@ -56,34 +72,56 @@ public class PlayerActivity extends AppCompatActivity {
 
     // Logic
     private boolean isMusicPlaying;
-    private int currentMusic;
     private int currentPosition;
+
+    // Songs collection
+    private HashMap<String,Double> values;
+
+    private HashMap<String,Integer> songsResIds;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.player);
 
+        // Set player mode
+        if(SelectModeActivity.PLAYER_MODE.equals(SelectModeActivity.BEAST_MODE)) {
+            this.functioningMode = new BeastMode();
+            GLOBAL_ENERGY = 0.6f;
+        } else if(SelectModeActivity.PLAYER_MODE.equals(SelectModeActivity.RELAX_MODE)) {
+            this.functioningMode = new RelaxedMode();
+            GLOBAL_ENERGY = 0.3f;
+        }
+
+        // Set song energy EchoNest API
+        songsResIds = new HashMap<String,Integer>();
+
+        ArrayList<Integer> list = new ArrayList<Integer>();
+        Field[] fields = R.raw.class.getFields();
+        for (Field f : fields) {
+            try {
+                list.add(f.getInt(null));
+            } catch (IllegalArgumentException e) {
+            } catch (IllegalAccessException e) {}
+        }
+
+
+        // Get songs meta-info
+        values = new HashMap<>();
+        Thread fillEnergy = new FillEnergyThread(values,getApplicationContext(),list);
+        fillEnergy.start();
+        try {
+            fillEnergy.join();
+        } catch (Exception e){}
+
         inflater = this.getLayoutInflater();
         setUpBitalino();
-
-        // Test musics List
-        currentMusic=0;
-        currentPosition=-1;
-        songsList = new int[10];
-        songsList[0] = R.raw.music_01;
-        songsList[1] = R.raw.music_02;
-        songsList[2] = R.raw.music_03;
-
-        songsTitles = new ArrayList<>();
-        songsTitles.add("Miguel Araújo - Fizz Limão");
-        songsTitles.add("Pendulum - Crush");
-        songsTitles.add("The Lumineers - Stuborn Love");
 
         mp = new MediaPlayer();
         isMusicPlaying = false;
         songTitle = (TextView) findViewById(R.id.songTitle);
-        mp = MediaPlayer.create(getApplicationContext(), songsList[currentMusic]);
+        // CURRENT_SONG = "Me Gustas Tu";
+        mp = MediaPlayer.create(getApplicationContext(), songsResIds.get(CURRENT_SONG));
 
         playStopButton = (ImageButton) findViewById(R.id.btnPlay);
         playStopButton.setOnClickListener(new View.OnClickListener() {
@@ -106,7 +144,7 @@ public class PlayerActivity extends AppCompatActivity {
                         * - Start progress Bar
                         * */
 
-                        songTitle.setText(songsTitles.get(currentMusic));
+                        songTitle.setText(CURRENT_SONG);
                         isMusicPlaying=true;
 
                     } else {
@@ -131,12 +169,12 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 /*Go to next Song*/
-                mp.stop();
+                /*mp.stop();
                 nextSong();
                 mp = MediaPlayer.create(getApplicationContext(), songsList[currentMusic]);
                 mp.start();
                 songTitle.setText(songsTitles.get(currentMusic));
-                isMusicPlaying=true;
+                isMusicPlaying=true;*/
             }
         });
 
@@ -145,12 +183,12 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 /*Go to previous Song*/
-                mp.stop();
+                /*mp.stop();
                 previousSong();
                 mp = MediaPlayer.create(getApplicationContext(), songsList[currentMusic]);
                 mp.start();
                 songTitle.setText(songsTitles.get(currentMusic));
-                isMusicPlaying=true;
+                isMusicPlaying=true;*/
             }
         });
 
@@ -192,6 +230,9 @@ public class PlayerActivity extends AppCompatActivity {
                 int meanEDA = sumEDA / dataFrame.length;
                 Log.i("BITALINO MEAN MUSCLE", String.valueOf(meanMuscle));
                 Log.i("BITALINO MEAN EDA", String.valueOf(meanEDA));
+                if(PREVIOUS_MEAN_EDA==-1) {
+                    PREVIOUS_MEAN_EDA = meanEDA;
+                }
 
                 // Stop/Play Logic
                 if (meanMuscle > MUSCLE_PICK) {
@@ -210,7 +251,7 @@ public class PlayerActivity extends AppCompatActivity {
                             * - Start progress Bar
                             * */
 
-                            songTitle.setText(songsTitles.get(currentMusic));
+                            songTitle.setText(CURRENT_SONG);
                             isMusicPlaying = true;
 
                         } else {
@@ -229,16 +270,24 @@ public class PlayerActivity extends AppCompatActivity {
                 }
 
                 // Song manager logic
-                if(meanEDA > EDA_PICK) {
+                /*if(meanEDA > EDA_PICK) {
+
+                    // JUST TESTING EDA
                     EDA_PICK+=10;
-                    /*Go to next Song*/
                     mp.stop();
                     nextSong();
                     mp = MediaPlayer.create(getApplicationContext(), songsList[currentMusic]);
                     mp.start();
                     songTitle.setText(songsTitles.get(currentMusic));
                     isMusicPlaying=true;
-                }
+                }*/
+
+                double newEnergy = functioningMode.songSelection(meanEDA, PREVIOUS_MEAN_EDA, GLOBAL_ENERGY);
+                findTheRightSong(newEnergy);
+                PREVIOUS_MEAN_EDA = meanEDA;
+
+                // Get Global Energy Value
+                GLOBAL_ENERGY = meanEDA;
 
                 h.postDelayed(this, DELAY);
             }
@@ -247,7 +296,7 @@ public class PlayerActivity extends AppCompatActivity {
         return true;
     }
 
-    private void nextSong() {
+    /*private void nextSong() {
         if(currentMusic < MAX_MUSIC_INDEX) {
             currentMusic++;
         } else {
@@ -259,7 +308,137 @@ public class PlayerActivity extends AppCompatActivity {
         if(currentMusic != MIN_MUSIC_INDEX) {
             currentMusic--;
         }
+    }*/
+
+    public void findTheRightSong(double newEnergy) {
+        double maxDiffNegative = 0;
+        double minDiffPositive = 1000;
+
+        if(SelectModeActivity.PLAYER_MODE.equals(SelectModeActivity.BEAST_MODE)) {
+            for (Map.Entry<String, Double> entry : values.entrySet()) {
+                if (!entry.getKey().equals(CURRENT_SONG)) {
+                    double diff = newEnergy - entry.getValue();
+                    if(diff < minDiffPositive) {
+                        minDiffPositive = diff;
+                        CURRENT_SONG = entry.getKey();
+                    }
+                }
+            }
+        } else if(SelectModeActivity.PLAYER_MODE.equals(SelectModeActivity.RELAX_MODE)) {
+            for (Map.Entry<String, Double> entry : values.entrySet()) {
+                if (!entry.getKey().equals(CURRENT_SONG)) {
+                    double diff = entry.getValue() - newEnergy;
+                    if(diff > maxDiffNegative) {
+                        maxDiffNegative = diff;
+                        CURRENT_SONG = entry.getKey();
+                    }
+                }
+            }
+        }
     }
+
+    // Set the player mode
+    public void setMode (FuncMode f){
+        this.functioningMode = f;
+    }
+
+    // Execute algorithm for selecting songs
+    // EDA novo, EDA antigo, energy music level
+    public void executeSongSelection(int newEnergyLevel, int oldEnergyLevel, float energy){
+        functioningMode.songSelection(newEnergyLevel, oldEnergyLevel, energy);
+    }
+
+    /*-----------------------------------------------------------------------------------------------------------*/
+    /*------------------------------------------- ECHO NEST -----------------------------------------------------*/
+    /*-----------------------------------------------------------------------------------------------------------*/
+
+    public static Double getTempo(String artistName, String title) throws EchoNestException {
+        EchoNestAPI echoNest = new EchoNestAPI("WNCVO3LISNWOOHCDS");
+        SongParams p = new SongParams();
+        p.setArtist(artistName);
+        p.setTitle(title);
+        p.setResults(1);
+        p.includeAudioSummary();
+
+        List<Song> songs = echoNest.searchSongs(p);
+        if (songs.size() > 0) {
+            double tempo = songs.get(0).getTempo();
+            return Double.valueOf(tempo);
+        } else {
+            return null;
+        }
+    }
+
+    class FillEnergyThread extends Thread {
+
+        private Map<String,Double> energyValues;
+        private List<Integer> fields;
+        private Context context;
+
+        public FillEnergyThread(Map<String,Double> BPMs, Context context, List<Integer> fields){
+            this.energyValues = BPMs;
+            this.context = context;
+            this.fields = fields;
+        }
+
+        public void run (){
+            double tempo;
+            int min = 10000;
+            for(int i : fields) {
+                Resources res = this.context.getResources();
+                AssetFileDescriptor afd = res.openRawResourceFd(i);
+                MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+                mmr.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+                String albumName = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+                String songTitle = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+                try {
+                    tempo = getEnergy(albumName, songTitle);
+                    songsResIds.put(songTitle,i);
+                } catch (EchoNestException e) {
+                    Log.d("TAG", e.getMessage());
+                    tempo = 0;
+                }
+                energyValues.put(songTitle, tempo);
+
+                // Find the first song to play with!
+                /**
+                 * Simple Algorithm finds best song to start with
+                 */
+                int diff = (int) Math.abs(tempo - GLOBAL_ENERGY);
+
+                if(diff < min) {
+                    min = diff;
+                    CURRENT_SONG = songTitle;
+                }
+                /*-----------------------------------------------*/
+
+            }
+            for (Map.Entry<String,Double> entry: energyValues.entrySet())
+                Log.d("tos", entry.getKey()+" - "+entry.getValue());
+        }
+
+        public Double getEnergy(String artistName, String title) throws EchoNestException {
+            EchoNestAPI echoNest = new EchoNestAPI("WNCVO3LISNWOOHCDS");
+            SongParams p = new SongParams();
+            p.setArtist(artistName);
+            p.setTitle(title);
+            p.setResults(1);
+            p.includeAudioSummary();
+
+            List<Song> songs = echoNest.searchSongs(p);
+            if (songs.size() > 0) {
+                double energy = songs.get(0).getEnergy();
+                return Double.valueOf(energy);
+            } else {
+                return null;
+            }
+        }
+
+        public synchronized Map<String,Double> getEnergyValues() {
+            return energyValues;
+        }
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

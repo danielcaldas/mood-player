@@ -17,7 +17,6 @@ import android.widget.Toast;
 
 import java.util.regex.Matcher;
 
-import java.io.IOException;
 import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
@@ -56,8 +55,7 @@ public class MainActivity extends AppCompatActivity {
 
                 if(isValid) {
                     /*Start MoodPlayer*/
-                    Intent i = new Intent(MainActivity.this, PlayerActivity.class);
-                    // startActivityForResult(i, 3);
+                    Intent i = new Intent(MainActivity.this, SelectModeActivity.class);
                     startActivity(i);
                     MAC_ADDRESS = macAdd;
                 } else {
