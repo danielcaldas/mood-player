@@ -53,9 +53,8 @@ public class PlayerActivity extends AppCompatActivity {
     private static int EDA_PICK = 900;
 
     private static int DELAY = 60;
-
-    private static int MAX_MUSIC_INDEX = 2;
-    private static int MIN_MUSIC_INDEX = 0;
+    private static int COUNTER_EDA=0;
+    private static int EDA_ACCUMULATOR=0;
 
     private static String DEFAULT_MUSIC_TITLE = "Just squeeze your arm!";
     private static String CURRENT_SONG;
@@ -191,7 +190,6 @@ public class PlayerActivity extends AppCompatActivity {
                 isMusicPlaying=true;*/
             }
         });
-
     }
 
     public void setUpBitalino() {
@@ -227,7 +225,9 @@ public class PlayerActivity extends AppCompatActivity {
                     sumEDA += Math.abs(dataFrame[i].getAnalog(1));
                 }
                 int meanMuscle = sumMuscle / dataFrame.length;
-                int meanEDA = sumEDA / dataFrame.length;
+                final int meanEDA = sumEDA / dataFrame.length;
+                EDA_ACCUMULATOR+=meanEDA;
+
                 Log.i("BITALINO MEAN MUSCLE", String.valueOf(meanMuscle));
                 Log.i("BITALINO MEAN EDA", String.valueOf(meanEDA));
                 if(PREVIOUS_MEAN_EDA==-1) {
@@ -245,11 +245,6 @@ public class PlayerActivity extends AppCompatActivity {
                                 mp.seekTo(currentPosition);
                             }
                             mp.start();
-
-                            /*Implement here
-                            * - Time of Song
-                            * - Start progress Bar
-                            * */
 
                             songTitle.setText(CURRENT_SONG);
                             isMusicPlaying = true;
@@ -269,25 +264,20 @@ public class PlayerActivity extends AppCompatActivity {
                     }
                 }
 
-                // Song manager logic
-                /*if(meanEDA > EDA_PICK) {
-
-                    // JUST TESTING EDA
-                    EDA_PICK+=10;
-                    mp.stop();
-                    nextSong();
-                    mp = MediaPlayer.create(getApplicationContext(), songsList[currentMusic]);
-                    mp.start();
-                    songTitle.setText(songsTitles.get(currentMusic));
-                    isMusicPlaying=true;
-                }*/
-
-                double newEnergy = functioningMode.songSelection(meanEDA, PREVIOUS_MEAN_EDA, GLOBAL_ENERGY);
-                findTheRightSong(newEnergy);
-                PREVIOUS_MEAN_EDA = meanEDA;
-
-                // Get Global Energy Value
-                GLOBAL_ENERGY = meanEDA;
+                if(COUNTER_EDA==150) {
+                    EDA_ACCUMULATOR = EDA_ACCUMULATOR / 150;
+                    double newEnergy = functioningMode.songSelection(EDA_ACCUMULATOR, PREVIOUS_MEAN_EDA, GLOBAL_ENERGY);
+                    GLOBAL_ENERGY = (float)newEnergy;
+                    if(!isMusicPlaying) {
+                        Log.d("ENERGY", "newEnergy: "+newEnergy);
+                        findTheRightSong(newEnergy);
+                        PREVIOUS_MEAN_EDA = meanEDA;
+                        COUNTER_EDA = 0;
+                        EDA_ACCUMULATOR = 0;
+                    } else {
+                        COUNTER_EDA=0; EDA_ACCUMULATOR=0;
+                    }
+                } else COUNTER_EDA++;
 
                 h.postDelayed(this, DELAY);
             }
@@ -296,23 +286,18 @@ public class PlayerActivity extends AppCompatActivity {
         return true;
     }
 
-    /*private void nextSong() {
-        if(currentMusic < MAX_MUSIC_INDEX) {
-            currentMusic++;
-        } else {
-            currentMusic=0;
-        }
+    private void changeSong() {
+        mp.stop();
+        mp = MediaPlayer.create(getApplicationContext(), songsResIds.get(CURRENT_SONG));
+        mp.start();
+        songTitle.setText(CURRENT_SONG);
+        isMusicPlaying = true;
     }
-
-    private void previousSong() {
-        if(currentMusic != MIN_MUSIC_INDEX) {
-            currentMusic--;
-        }
-    }*/
 
     public void findTheRightSong(double newEnergy) {
         double maxDiffNegative = 0;
         double minDiffPositive = 1000;
+        String song=CURRENT_SONG;
 
         if(SelectModeActivity.PLAYER_MODE.equals(SelectModeActivity.BEAST_MODE)) {
             for (Map.Entry<String, Double> entry : values.entrySet()) {
@@ -320,7 +305,8 @@ public class PlayerActivity extends AppCompatActivity {
                     double diff = newEnergy - entry.getValue();
                     if(diff < minDiffPositive) {
                         minDiffPositive = diff;
-                        CURRENT_SONG = entry.getKey();
+                        song = entry.getKey();
+                        Log.i("BITALINO BEAST", CURRENT_SONG);
                     }
                 }
             }
@@ -330,22 +316,30 @@ public class PlayerActivity extends AppCompatActivity {
                     double diff = entry.getValue() - newEnergy;
                     if(diff > maxDiffNegative) {
                         maxDiffNegative = diff;
-                        CURRENT_SONG = entry.getKey();
+                        song = entry.getKey();
+                        Log.i("BITALINO RELAX", CURRENT_SONG);
                     }
                 }
             }
         }
+
+        if(!CURRENT_SONG.equals(song)) {
+            CURRENT_SONG = song;
+            changeSong();
+        }
     }
 
-    // Set the player mode
-    public void setMode (FuncMode f){
-        this.functioningMode = f;
+    float volume = 1;
+    float speed = 0.05f;
+
+    public void FadeOut(float deltaTime) {
+        mp.setVolume(volume, volume);
+        volume -= speed* deltaTime;
     }
 
-    // Execute algorithm for selecting songs
-    // EDA novo, EDA antigo, energy music level
-    public void executeSongSelection(int newEnergyLevel, int oldEnergyLevel, float energy){
-        functioningMode.songSelection(newEnergyLevel, oldEnergyLevel, energy);
+    public void FadeIn(float deltaTime) {
+        mp.setVolume(volume, volume);
+        volume += speed* deltaTime;
     }
 
     /*-----------------------------------------------------------------------------------------------------------*/
@@ -391,6 +385,9 @@ public class PlayerActivity extends AppCompatActivity {
                 mmr.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
                 String albumName = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
                 String songTitle = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+                Log.d("ECHO", albumName);
+                Log.d("ECHO", songTitle);
+
                 try {
                     tempo = getEnergy(albumName, songTitle);
                     songsResIds.put(songTitle,i);
