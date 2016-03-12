@@ -1,16 +1,8 @@
 package com.player.mood.moodplayer;
 
-import android.app.ProgressDialog;
-import android.bluetooth.BluetoothAdapter;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -24,48 +16,32 @@ import android.os.Handler;
 import com.player.mood.moodplayer.bitalino.comm.BITalinoFrame;
 import com.player.mood.moodplayer.bitalino.deviceandroid.BitalinoAndroidDevice;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+
 
 /**
  * Created by daniel on 11-music_03-2016.
  *
- * EMG A1 (Port 0)
- * ECG A3 (Port 2)
+ * This class is a mp3 player controlled by biosignals.
  */
 public class PlayerActivity extends AppCompatActivity {
 
-    // Bitalino default values
-    private static final int RECEPTION_FREQ_MAX = 1000;
-    private static final int RECEPTION_FREQ_MIN = 1;
-    private static final int DEFAULT_RECEPTION_FREQ = 100;
-    private static final int SAMPLING_FREQ_MAX = 100;
-    private static final int SAMPLING_FREQ_MIN = 1;
-    private static final int DEFAULT_SAMPLING_FREQ = 50;
-    private static final int DEFAULT_NUMBER_OF_BITS = 12;
-
-    private static final int EMG_MIN_FREQ = 1000;
-    private static final int ECG_MIN_FREQ = 1000;
-
-    // ERROR VARIABLES
-    private int bpErrorCode = 0;
-    private boolean serviceError = false;
-    private boolean connectionError = false;
-
-
     private static final int N_FRAMES = 100;
+    private static final int DEFAULT_FREQ = 1000;
     private static final int MUSCLE_MEAN = 500;
+
+
+    private static final int MUSCLE_PICK = 150;
+    private static int EDA_PICK = 900;
+
     private static int DELAY = 60;
 
     private static int MAX_MUSIC_INDEX = 2;
     private static int MIN_MUSIC_INDEX = 0;
 
-    private static String DEFAULT_MUSIC_TITLE = "MoodPlayer!";
-    private static String MUSIC_TITLE = "Miguel Araújo - Fizz Limão";
+    private static String DEFAULT_MUSIC_TITLE = "Just squeeze your arm!";
 
-    private LayoutInflater inflater;
-
+    private static ArrayList<String> songsTitles;
     private static int[] songsList;
 
     // View
@@ -73,10 +49,10 @@ public class PlayerActivity extends AppCompatActivity {
     private ImageButton nextButton;
     private ImageButton previousButton;
 
-    private MediaPlayer mp; // Media Player, that manages audio
+    private LayoutInflater inflater;
 
+    private MediaPlayer mp;
     private TextView songTitle;
-
 
     // Logic
     private boolean isMusicPlaying;
@@ -89,7 +65,7 @@ public class PlayerActivity extends AppCompatActivity {
         setContentView(R.layout.player);
 
         inflater = this.getLayoutInflater();
-        setUpBitalino(MainActivity.MAC_ADDRESS);
+        setUpBitalino();
 
         // Test musics List
         currentMusic=0;
@@ -98,6 +74,11 @@ public class PlayerActivity extends AppCompatActivity {
         songsList[0] = R.raw.music_01;
         songsList[1] = R.raw.music_02;
         songsList[2] = R.raw.music_03;
+
+        songsTitles = new ArrayList<>();
+        songsTitles.add("Miguel Araújo - Fizz Limão");
+        songsTitles.add("Pendulum - Crush");
+        songsTitles.add("The Lumineers - Stuborn Love");
 
         mp = new MediaPlayer();
         isMusicPlaying = false;
@@ -125,7 +106,7 @@ public class PlayerActivity extends AppCompatActivity {
                         * - Start progress Bar
                         * */
 
-                        songTitle.setText(MUSIC_TITLE);
+                        songTitle.setText(songsTitles.get(currentMusic));
                         isMusicPlaying=true;
 
                     } else {
@@ -154,7 +135,7 @@ public class PlayerActivity extends AppCompatActivity {
                 nextSong();
                 mp = MediaPlayer.create(getApplicationContext(), songsList[currentMusic]);
                 mp.start();
-                songTitle.setText(MUSIC_TITLE);
+                songTitle.setText(songsTitles.get(currentMusic));
                 isMusicPlaying=true;
             }
         });
@@ -168,90 +149,31 @@ public class PlayerActivity extends AppCompatActivity {
                 previousSong();
                 mp = MediaPlayer.create(getApplicationContext(), songsList[currentMusic]);
                 mp.start();
-                songTitle.setText(MUSIC_TITLE);
+                songTitle.setText(songsTitles.get(currentMusic));
                 isMusicPlaying=true;
             }
         });
 
     }
 
-    public void setUpBitalino(String macAddress) {
-        boolean r = startRecordingEMG();
-        if(r==true){
-            Toast.makeText(getApplicationContext(), "Starting EMG...", Toast.LENGTH_SHORT).show();
-        }
-
-        r = startRecordingECG();
-        if(r==true){
-            Toast.makeText(getApplicationContext(), "Starting ECG...", Toast.LENGTH_SHORT).show();
-        }
-
-
-    }
-
-    private boolean startRecordingECG() {
-        final BitalinoAndroidDevice bdev = new BitalinoAndroidDevice(MainActivity.MAC_ADDRESS);
-        int[] actChan = new int[]{1};
-        bdev.connect(ECG_MIN_FREQ, actChan);
-        bdev.start();
-
-        final Handler h = new Handler();
-
-        h.postDelayed(new Runnable() {
-            public void run() {
-                BITalinoFrame[] dataFrame = bdev.read(N_FRAMES);
-                int sum = 0;
-                for (int i = 0; i < dataFrame.length; i++) {
-                    // Log.i("BITALINO", dataFrame[i].stringAnalogDigital());
-                    sum += Math.abs(dataFrame[i].getAnalog(0) - MUSCLE_MEAN);
-                }
-                int mean = sum / dataFrame.length;
-                Log.i("MEAN!!!!!!", String.valueOf(mean));
-
-                if (mean > 40) {
-                    try {
-                        if (!isMusicPlaying) {
-                            playStopButton.setImageResource(R.drawable.btn_pause);
-
-                            if (currentPosition != -1) {
-                                // forward or backward to certain seconds
-                                mp.seekTo(currentPosition);
-                            }
-                            mp.start();
-
-                            /*Implement here
-                            * - Time of Song
-                            * - Start progress Bar
-                            * */
-
-                            songTitle.setText(MUSIC_TITLE);
-                            isMusicPlaying = true;
-
-                        } else {
-                            playStopButton.setImageResource(R.drawable.btn_play);
-                            mp.pause();
-                            songTitle.setText(DEFAULT_MUSIC_TITLE);
-                            isMusicPlaying = false;
-
-                            currentPosition = mp.getCurrentPosition();
-                        }
-                    } catch (IllegalArgumentException e) {
-                        e.printStackTrace();
-                    } catch (IllegalStateException e) {
-                        e.printStackTrace();
-                    }
-                }
-                h.postDelayed(this, DELAY);
+    public void setUpBitalino() {
+        try {
+            boolean r = startRecording();
+            if(r==true){
+                Toast.makeText(getApplicationContext(), "Starting Sensors...", Toast.LENGTH_SHORT).show();
             }
-        }, 1);
-
-        return true;
+        } catch (Exception e){}
     }
 
-    private boolean startRecordingEMG() {
+    /**
+     * EMG & EDA Recording
+     * @return true if Bitalino starts collecting data.
+     */
+    private boolean startRecording() throws InterruptedException {
         final BitalinoAndroidDevice bdev = new BitalinoAndroidDevice(MainActivity.MAC_ADDRESS);
-        int[] actChan = new int[]{0};
-        bdev.connect(EMG_MIN_FREQ, actChan);
+        int[] actChan = new int[]{0,1};
+        bdev.connect(DEFAULT_FREQ, actChan);
+        Thread.sleep(DEFAULT_FREQ); // Danger Zone!
         bdev.start();
 
         final Handler h = new Handler();
@@ -259,15 +181,20 @@ public class PlayerActivity extends AppCompatActivity {
         h.postDelayed(new Runnable() {
             public void run() {
                 BITalinoFrame[] dataFrame = bdev.read(N_FRAMES);
-                int sum = 0;
+                int sumMuscle = 0;
+                int sumEDA = 0;
                 for (int i = 0; i < dataFrame.length; i++) {
                     // Log.i("BITALINO", dataFrame[i].stringAnalogDigital());
-                    sum += Math.abs(dataFrame[i].getAnalog(0) - MUSCLE_MEAN);
+                    sumMuscle += Math.abs(dataFrame[i].getAnalog(0) - MUSCLE_MEAN);
+                    sumEDA += Math.abs(dataFrame[i].getAnalog(1));
                 }
-                int mean = sum / dataFrame.length;
-                Log.i("MEAN!!!!!!", String.valueOf(mean));
+                int meanMuscle = sumMuscle / dataFrame.length;
+                int meanEDA = sumEDA / dataFrame.length;
+                Log.i("BITALINO MEAN MUSCLE", String.valueOf(meanMuscle));
+                Log.i("BITALINO MEAN EDA", String.valueOf(meanEDA));
 
-                if (mean > 40) {
+                // Stop/Play Logic
+                if (meanMuscle > MUSCLE_PICK) {
                     try {
                         if (!isMusicPlaying) {
                             playStopButton.setImageResource(R.drawable.btn_pause);
@@ -283,7 +210,7 @@ public class PlayerActivity extends AppCompatActivity {
                             * - Start progress Bar
                             * */
 
-                            songTitle.setText(MUSIC_TITLE);
+                            songTitle.setText(songsTitles.get(currentMusic));
                             isMusicPlaying = true;
 
                         } else {
@@ -300,6 +227,19 @@ public class PlayerActivity extends AppCompatActivity {
                         e.printStackTrace();
                     }
                 }
+
+                // Song manager logic
+                if(meanEDA > EDA_PICK) {
+                    EDA_PICK+=10;
+                    /*Go to next Song*/
+                    mp.stop();
+                    nextSong();
+                    mp = MediaPlayer.create(getApplicationContext(), songsList[currentMusic]);
+                    mp.start();
+                    songTitle.setText(songsTitles.get(currentMusic));
+                    isMusicPlaying=true;
+                }
+
                 h.postDelayed(this, DELAY);
             }
         }, 1);
@@ -323,19 +263,14 @@ public class PlayerActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }
