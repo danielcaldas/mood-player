@@ -76,4 +76,19 @@ public class BITalinoFrame {
         .add("digital", Arrays.toString(digital)).toString();
   }
 
+  public String stringAnalogDigital() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Analog [ ");
+    for(int i=0; i < analog.length; i++) {
+        sb.append(analog[i]+" ");
+    }
+    sb.append("]  ");
+    sb.append("Digital [ ");
+    for(int i=0; i < digital.length; i++) {
+      sb.append(digital[i]+" ");
+    }
+    sb.append("]");
+    return sb.toString();
+  }
+
 }

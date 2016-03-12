@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 
+import com.player.mood.moodplayer.MainActivity;
 import com.player.mood.moodplayer.bitalino.comm.BITalinoDevice;
 import com.player.mood.moodplayer.bitalino.comm.BITalinoException;
 import com.player.mood.moodplayer.bitalino.comm.BITalinoFrame;
@@ -20,7 +21,7 @@ import com.player.mood.moodplayer.bitalino.comm.BITalinoFrame;
 
 
 public class BitalinoAndroidDevice{
-	private String remoteDeviceMAC = "98:D3:31:B2:BD:41";
+	private String remoteDeviceMAC;// = "98:D3:31:B2:BD:41";
 	private int sampleRate=1000;
 	private static final UUID MY_UUID = UUID
 			.fromString("00001101-0000-1000-8000-00805F9B34FB");
@@ -28,7 +29,7 @@ public class BitalinoAndroidDevice{
 	
 	public BitalinoAndroidDevice(String remoteDeviceMAC) {
 		super();
-		this.remoteDeviceMAC=remoteDeviceMAC;		
+		this.remoteDeviceMAC=remoteDeviceMAC;
 	}
 	
 	public int start(){

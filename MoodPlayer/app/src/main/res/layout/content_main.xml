@@ -38,7 +38,7 @@
         android:layout_marginBottom="117dp" />
 
     <EditText
-        android:hint="00:29:23:12:12:23"
+        android:text="20:15:10:26:62:53"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/mac_address"

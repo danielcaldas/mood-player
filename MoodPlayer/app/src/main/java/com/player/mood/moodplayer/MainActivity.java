@@ -22,6 +22,8 @@ import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
 
+    public static String MAC_ADDRESS;
+
     // Control Buttons
     private Button playButton;
     private EditText macAddress;
@@ -57,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
                     Intent i = new Intent(MainActivity.this, PlayerActivity.class);
                     // startActivityForResult(i, 3);
                     startActivity(i);
+                    MAC_ADDRESS = macAdd;
                 } else {
                     Toast.makeText(MainActivity.this, "Invalid Mac Address!", Toast.LENGTH_SHORT).show();
                 }
