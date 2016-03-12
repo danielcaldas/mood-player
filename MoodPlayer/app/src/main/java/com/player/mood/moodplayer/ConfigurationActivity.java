@@ -1,30 +1,20 @@
 package com.player.mood.moodplayer;
 
 import android.content.Intent;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.Toast;
 
-import java.util.regex.Matcher;
-
-import java.io.IOException;
-import java.util.regex.Pattern;
-
-public class MainActivity extends AppCompatActivity {
-
-    // Control Buttons
-    private Button playButton;
-    private EditText macAddress;
+/**
+ * Created by daniel on 12-03-2016.
+ */
+public class ConfigurationActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,45 +32,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        macAddress = (EditText) findViewById(R.id.mac_address);
-
-        playButton = (Button) findViewById(R.id.play_button);
-        playButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                String macAdd = macAddress.getText().toString();
-                boolean isValid = isMacAddressValid(macAdd);
-
-                if(isValid) {
-                    /*Start MoodPlayer*/
-                    Intent i = new Intent(MainActivity.this, PlayerActivity.class);
-                    // startActivityForResult(i, 3);
-                    startActivity(i);
-                } else {
-                    Toast.makeText(MainActivity.this, "Invalid Mac Address!", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
-    }
-
-    /**
-     *
-     * @param macAddres, mac address for bitalino board
-     * @return true if it is a valid MAC, false otherwise
-     */
-    public boolean isMacAddressValid(String macAddres) {
-        boolean validated = true;
-
-        Pattern p = Pattern.compile("^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$");
-        Matcher m = p.matcher(macAddres);
-
-        if (macAddress == null || macAddress.equals("") || !m.find()) {
-            validated = false;
-        }
-
-        return validated;
     }
 
     @Override
