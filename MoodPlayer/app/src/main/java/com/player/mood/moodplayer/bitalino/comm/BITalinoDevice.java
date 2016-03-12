@@ -119,7 +119,6 @@ public class BITalinoDevice {
     } catch (Exception e) {
       throw new BITalinoException(BITalinoErrorTypes.BT_DEVICE_NOT_CONNECTED);
     }
-
   }
 
   /**

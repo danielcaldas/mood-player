@@ -46,14 +46,17 @@ public class PlayerActivity extends AppCompatActivity {
     private static final int DEFAULT_NUMBER_OF_BITS = 12;
 
     private static final int EMG_MIN_FREQ = 1000;
+    private static final int ECG_MIN_FREQ = 1000;
 
     // ERROR VARIABLES
-    private int bpErrorCode   = 0;
+    private int bpErrorCode = 0;
     private boolean serviceError = false;
     private boolean connectionError = false;
 
-    private static int DELAY = 100;
-    private static int PICK = 1000;
+
+    private static final int N_FRAMES = 100;
+    private static final int MUSCLE_MEAN = 500;
+    private static int DELAY = 60;
 
     private static int MAX_MUSIC_INDEX = 2;
     private static int MIN_MUSIC_INDEX = 0;
@@ -84,18 +87,6 @@ public class PlayerActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.player);
-        /* TOOLBAR??
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });*/
 
         inflater = this.getLayoutInflater();
         setUpBitalino(MainActivity.MAC_ADDRESS);
@@ -185,62 +176,69 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     public void setUpBitalino(String macAddress) {
-        boolean r = startRecording();
+        boolean r = startRecordingEMG();
         if(r==true){
-            Toast.makeText(getApplicationContext(), "Starting...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Starting EMG...", Toast.LENGTH_SHORT).show();
         }
+
+        r = startRecordingECG();
+        if(r==true){
+            Toast.makeText(getApplicationContext(), "Starting ECG...", Toast.LENGTH_SHORT).show();
+        }
+
+
     }
 
-    private boolean startRecording() {
+    private boolean startRecordingECG() {
         final BitalinoAndroidDevice bdev = new BitalinoAndroidDevice(MainActivity.MAC_ADDRESS);
-        int[] actChan = new int[]{0};
-        // int[] actChan = new int[]{2};
-        // BITalinoDevice device = new BITalinoDevice(1000, new int[]{0}); // this will listen in port 1
-        bdev.connect(EMG_MIN_FREQ, actChan);
+        int[] actChan = new int[]{1};
+        bdev.connect(ECG_MIN_FREQ, actChan);
         bdev.start();
 
         final Handler h = new Handler();
 
         h.postDelayed(new Runnable() {
             public void run() {
-                DELAY = 100;
-                BITalinoFrame[] dataFrame = bdev.read(100);
+                BITalinoFrame[] dataFrame = bdev.read(N_FRAMES);
+                int sum = 0;
                 for (int i = 0; i < dataFrame.length; i++) {
-                    Log.i("BITALINO", dataFrame[i].stringAnalogDigital());
-                    int max = dataFrame[i].getAnalog(0);
-                    if(max > PICK) {
-                        try{
-                            DELAY = 15000;
-                            if(!isMusicPlaying) {
-                                playStopButton.setImageResource(R.drawable.btn_pause);
+                    // Log.i("BITALINO", dataFrame[i].stringAnalogDigital());
+                    sum += Math.abs(dataFrame[i].getAnalog(0) - MUSCLE_MEAN);
+                }
+                int mean = sum / dataFrame.length;
+                Log.i("MEAN!!!!!!", String.valueOf(mean));
 
-                                if(currentPosition!=-1) {
-                                    // forward or backward to certain seconds
-                                    mp.seekTo(currentPosition);
-                                }
-                                mp.start();
+                if (mean > 40) {
+                    try {
+                        if (!isMusicPlaying) {
+                            playStopButton.setImageResource(R.drawable.btn_pause);
 
-                                /*Implement here
-                                * - Time of Song
-                                * - Start progress Bar
-                                * */
-
-                                songTitle.setText(MUSIC_TITLE);
-                                isMusicPlaying=true;
-
-                            } else {
-                                playStopButton.setImageResource(R.drawable.btn_play);
-                                mp.pause();
-                                songTitle.setText(DEFAULT_MUSIC_TITLE);
-                                isMusicPlaying=false;
-
-                                currentPosition = mp.getCurrentPosition();
+                            if (currentPosition != -1) {
+                                // forward or backward to certain seconds
+                                mp.seekTo(currentPosition);
                             }
-                        } catch (IllegalArgumentException e) {
-                            e.printStackTrace();
-                        } catch (IllegalStateException e) {
-                            e.printStackTrace();
+                            mp.start();
+
+                            /*Implement here
+                            * - Time of Song
+                            * - Start progress Bar
+                            * */
+
+                            songTitle.setText(MUSIC_TITLE);
+                            isMusicPlaying = true;
+
+                        } else {
+                            playStopButton.setImageResource(R.drawable.btn_play);
+                            mp.pause();
+                            songTitle.setText(DEFAULT_MUSIC_TITLE);
+                            isMusicPlaying = false;
+
+                            currentPosition = mp.getCurrentPosition();
                         }
+                    } catch (IllegalArgumentException e) {
+                        e.printStackTrace();
+                    } catch (IllegalStateException e) {
+                        e.printStackTrace();
                     }
                 }
                 h.postDelayed(this, DELAY);
@@ -248,87 +246,65 @@ public class PlayerActivity extends AppCompatActivity {
         }, 1);
 
         return true;
-        /*BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        final ProgressDialog progress;
-        if (mBluetoothAdapter == null) {
-            Toast.makeText(getApplicationContext(), R.string.nr_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        if (!mBluetoothAdapter.isEnabled()){
-            showBluetoothDialog();
-            return false;
-        }
-
-        progress = ProgressDialog.show(this,getResources().getString(R.string.nr_progress_dialog_title),getResources().getString(R.string.nr_progress_dialog_message), true);
-        Thread connectionThread =
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-
-                    //Revisar		BitalinoAndroidDevice connectionTest = new BitalinoAndroidDevice(recordingConfiguration.getMacAddress());
-                    //Revisar
-                    //Revisar					connectionTest.Close();
-
-
-                    runOnUiThread(new Runnable(){
-                        public void run(){
-                            progress.dismiss();
-                            if(connectionError){
-                                Toast.makeText(getApplicationContext(), "Error "+bpErrorCode, Toast.LENGTH_SHORT).show();
-                            }else{
-                                /*Intent intent = new Intent(getApplicationContext(), BiopluxService.class);
-                                intent.putExtra(KEY_RECORDING_NAME, recording.getName());
-                                intent.putExtra(KEY_CONFIGURATION, recordingConfiguration);
-                                startService(intent);
-                                // startChronometer();
-                                Toast.makeText(getApplicationContext(), getString(R.string.nr_info_started), Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    });
-                }
-            });
-
-        if(recordingConfiguration.getMacAddress().compareTo("test")==0 && !isServiceRunning() && !recordingOverride)
-            connectionThread.start();
-        else if(mBluetoothAdapter.isEnabled() && !isServiceRunning() && !recordingOverride) {
-            connectionThread.start();
-        }
-        return false;*/
     }
 
-    /**
-     * Creates and shows a bluetooth error dialog if mac address is other than
-     * 'test' and the bluetooth adapter is turned off. On positive click it
-     * sends the user to android' settings for the user to turn bluetooth on
-     * easily
-     */
-    private void showBluetoothDialog() {
-        // Initializes custom title
-        TextView customTitleView = (TextView) inflater.inflate(R.layout.dialog_custom_title, null);
-        customTitleView.setText(R.string.nr_bluetooth_dialog_title);
+    private boolean startRecordingEMG() {
+        final BitalinoAndroidDevice bdev = new BitalinoAndroidDevice(MainActivity.MAC_ADDRESS);
+        int[] actChan = new int[]{0};
+        bdev.connect(EMG_MIN_FREQ, actChan);
+        bdev.start();
 
-        // dialogs builder
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setCustomTitle(customTitleView)
-                .setMessage(getResources().getString(R.string.nr_bluetooth_dialog_message))
-                .setPositiveButton(getString(R.string.nr_bluetooth_dialog_positive_button),
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                Intent intentBluetooth = new Intent();
-                                intentBluetooth.setAction(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS);
-                                getApplicationContext().startActivity(intentBluetooth);
+        final Handler h = new Handler();
+
+        h.postDelayed(new Runnable() {
+            public void run() {
+                BITalinoFrame[] dataFrame = bdev.read(N_FRAMES);
+                int sum = 0;
+                for (int i = 0; i < dataFrame.length; i++) {
+                    // Log.i("BITALINO", dataFrame[i].stringAnalogDigital());
+                    sum += Math.abs(dataFrame[i].getAnalog(0) - MUSCLE_MEAN);
+                }
+                int mean = sum / dataFrame.length;
+                Log.i("MEAN!!!!!!", String.valueOf(mean));
+
+                if (mean > 40) {
+                    try {
+                        if (!isMusicPlaying) {
+                            playStopButton.setImageResource(R.drawable.btn_pause);
+
+                            if (currentPosition != -1) {
+                                // forward or backward to certain seconds
+                                mp.seekTo(currentPosition);
                             }
-                        });
-        builder.setNegativeButton(
-                getString(R.string.nc_dialog_negative_button),
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        // dialog gets closed
-                    }
-                });
+                            mp.start();
 
-        // creates and shows bluetooth dialog
-        (builder.create()).show();
+                            /*Implement here
+                            * - Time of Song
+                            * - Start progress Bar
+                            * */
+
+                            songTitle.setText(MUSIC_TITLE);
+                            isMusicPlaying = true;
+
+                        } else {
+                            playStopButton.setImageResource(R.drawable.btn_play);
+                            mp.pause();
+                            songTitle.setText(DEFAULT_MUSIC_TITLE);
+                            isMusicPlaying = false;
+
+                            currentPosition = mp.getCurrentPosition();
+                        }
+                    } catch (IllegalArgumentException e) {
+                        e.printStackTrace();
+                    } catch (IllegalStateException e) {
+                        e.printStackTrace();
+                    }
+                }
+                h.postDelayed(this, DELAY);
+            }
+        }, 1);
+
+        return true;
     }
 
     private void nextSong() {
