@@ -268,7 +268,7 @@ public class PlayerActivity extends AppCompatActivity {
                     EDA_ACCUMULATOR = EDA_ACCUMULATOR / 150;
                     double newEnergy = functioningMode.songSelection(EDA_ACCUMULATOR, PREVIOUS_MEAN_EDA, GLOBAL_ENERGY);
                     GLOBAL_ENERGY = (float)newEnergy;
-                    if(!isMusicPlaying) {
+                    if(isMusicPlaying) {
                         Log.d("ENERGY", "newEnergy: "+newEnergy);
                         findTheRightSong(newEnergy);
                         PREVIOUS_MEAN_EDA = meanEDA;
