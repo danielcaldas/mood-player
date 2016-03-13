@@ -138,11 +138,6 @@ public class PlayerActivity extends AppCompatActivity {
                         }
                         mp.start();
 
-                        /*Implement here
-                        * - Time of Song
-                        * - Start progress Bar
-                        * */
-
                         songTitle.setText(CURRENT_SONG);
                         isMusicPlaying=true;
 
@@ -160,34 +155,6 @@ public class PlayerActivity extends AppCompatActivity {
                 } catch (IllegalStateException e) {
                     e.printStackTrace();
                 }
-            }
-        });
-
-        nextButton = (ImageButton) findViewById(R.id.btnNext);
-        nextButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                /*Go to next Song*/
-                /*mp.stop();
-                nextSong();
-                mp = MediaPlayer.create(getApplicationContext(), songsList[currentMusic]);
-                mp.start();
-                songTitle.setText(songsTitles.get(currentMusic));
-                isMusicPlaying=true;*/
-            }
-        });
-
-        previousButton = (ImageButton) findViewById(R.id.btnPrevious);
-        previousButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                /*Go to previous Song*/
-                /*mp.stop();
-                previousSong();
-                mp = MediaPlayer.create(getApplicationContext(), songsList[currentMusic]);
-                mp.start();
-                songTitle.setText(songsTitles.get(currentMusic));
-                isMusicPlaying=true;*/
             }
         });
     }

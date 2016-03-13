@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/Black">
+    android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/White">
 
     <TextView
         android:id="@+id/songTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textColor="@color/White"
-        android:textSize="28dp"
-        android:paddingLeft="10dp"
+        android:textColor="@color/Black"
+        android:textSize="26dp"
+        android:paddingLeft="12dp"
         android:textStyle="bold"
         android:text="The Good, The Bad And The Ugly"
         android:layout_above="@+id/player_buttons"
@@ -29,12 +29,6 @@
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true">
         <!-- Previous Button -->
-        <ImageButton
-            android:id="@+id/btnPrevious"
-            android:src="@drawable/btn_previous"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@null"/>
         <!-- Play Button -->
         <ImageButton
             android:id="@+id/btnPlay"
@@ -43,12 +37,6 @@
             android:layout_height="wrap_content"
             android:background="@null"/>
         <!-- Next Button -->
-        <ImageButton
-            android:id="@+id/btnNext"
-            android:src="@drawable/btn_next"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@null"/>
     </LinearLayout>
 
 
