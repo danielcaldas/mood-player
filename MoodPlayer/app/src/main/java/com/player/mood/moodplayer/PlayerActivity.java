@@ -41,18 +41,14 @@ import java.util.Map;
  */
 public class PlayerActivity extends AppCompatActivity {
 
-    private static final int N_FRAMES = 100;
-    private static final int DEFAULT_FREQ = 1000;
-    private static final int MUSCLE_MEAN = 500;
+
     private static float GLOBAL_ENERGY;
     private static int PREVIOUS_MEAN_EDA=-1;
 
     private FuncMode functioningMode;
 
-    private static final int MUSCLE_PICK = 150;
     private static int EDA_PICK = 900;
 
-    private static int DELAY = 60;
     private static int COUNTER_EDA=0;
     private static int EDA_ACCUMULATOR=0;
 
@@ -174,35 +170,35 @@ public class PlayerActivity extends AppCompatActivity {
      */
     private boolean startRecording() throws InterruptedException {
         final BitalinoAndroidDevice bdev = new BitalinoAndroidDevice(MainActivity.MAC_ADDRESS);
-        int[] actChan = new int[]{0,1};
-        bdev.connect(DEFAULT_FREQ, actChan);
-        Thread.sleep(DEFAULT_FREQ); // Danger Zone!
+        int[] actChan = new int[]{0};
+        bdev.connect(Const.DEFAULT_FREQ, actChan);
+        Thread.sleep(Const.DEFAULT_FREQ); // Danger Zone!
         bdev.start();
 
         final Handler h = new Handler();
 
         h.postDelayed(new Runnable() {
             public void run() {
-                BITalinoFrame[] dataFrame = bdev.read(N_FRAMES);
+                BITalinoFrame[] dataFrame = bdev.read(Const.N_FRAMES);
                 int sumMuscle = 0;
-                int sumEDA = 0;
+                // int sumEDA = 0;
                 for (int i = 0; i < dataFrame.length; i++) {
                     // Log.i("BITALINO", dataFrame[i].stringAnalogDigital());
-                    sumMuscle += Math.abs(dataFrame[i].getAnalog(0) - MUSCLE_MEAN);
-                    sumEDA += Math.abs(dataFrame[i].getAnalog(1));
+                    sumMuscle += Math.abs(dataFrame[i].getAnalog(0) - Const.MUSCLE_MEAN);
+                    // sumEDA += Math.abs(dataFrame[i].getAnalog(1));
                 }
                 int meanMuscle = sumMuscle / dataFrame.length;
-                final int meanEDA = sumEDA / dataFrame.length;
-                EDA_ACCUMULATOR+=meanEDA;
+                // final int meanEDA = sumEDA / dataFrame.length;
+                // EDA_ACCUMULATOR+=meanEDA;
 
                 Log.i("BITALINO MEAN MUSCLE", String.valueOf(meanMuscle));
-                Log.i("BITALINO MEAN EDA", String.valueOf(meanEDA));
+                /*Log.i("BITALINO MEAN EDA", String.valueOf(meanEDA));
                 if(PREVIOUS_MEAN_EDA==-1) {
                     PREVIOUS_MEAN_EDA = meanEDA;
-                }
+                }*/
 
                 // Stop/Play Logic
-                if (meanMuscle > MUSCLE_PICK) {
+                if (meanMuscle > Const.MUSCLE_PICK) {
                     try {
                         if (!isMusicPlaying) {
                             playStopButton.setImageResource(R.drawable.btn_pause);
@@ -231,7 +227,7 @@ public class PlayerActivity extends AppCompatActivity {
                     }
                 }
 
-                if(COUNTER_EDA==150) {
+                /*if(COUNTER_EDA==150) {
                     EDA_ACCUMULATOR = EDA_ACCUMULATOR / 150;
                     double newEnergy = functioningMode.songSelection(EDA_ACCUMULATOR, PREVIOUS_MEAN_EDA, GLOBAL_ENERGY);
                     GLOBAL_ENERGY = (float)newEnergy;
@@ -244,9 +240,9 @@ public class PlayerActivity extends AppCompatActivity {
                     } else {
                         COUNTER_EDA=0; EDA_ACCUMULATOR=0;
                     }
-                } else COUNTER_EDA++;
+                } else COUNTER_EDA++;*/
 
-                h.postDelayed(this, DELAY);
+                h.postDelayed(this, Const.DELAY);
             }
         }, 1);
 

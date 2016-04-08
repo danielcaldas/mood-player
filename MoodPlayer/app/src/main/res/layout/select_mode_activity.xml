@@ -19,4 +19,12 @@
         android:id="@+id/play_relax_mode"
         android:layout_gravity="center_horizontal" />
 
+    <Button
+        android:layout_marginTop="70dp"
+        android:layout_width="228dp"
+        android:layout_height="wrap_content"
+        android:text="Calibrate"
+        android:id="@+id/calibrate"
+        android:layout_gravity="center_horizontal" />
+
 </LinearLayout>
