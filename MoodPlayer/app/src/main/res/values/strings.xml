@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">MoodPlayer</string>
     <string name="action_settings">Settings</string>
+
+    <!-- Music Genres -->
+    <string name="rock">Rock</string>
+    <string name="pop">Pop</string>
+
 </resources>

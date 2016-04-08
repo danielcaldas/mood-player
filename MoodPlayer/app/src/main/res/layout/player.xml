@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/White">
+
+    <TextView
+        android:id="@+id/songTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textColor="@color/Black"
+        android:textSize="26dp"
+        android:paddingLeft="12dp"
+        android:textStyle="bold"
+        android:text="The Good, The Bad And The Ugly"
+        android:layout_above="@+id/player_buttons"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="46dp" />
+
+    <!-- Player Buttons -->
+    <LinearLayout
+        android:id="@+id/player_buttons"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingLeft="20dp"
+        android:paddingRight="10dp"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true">
+        <!-- Previous Button -->
+        <!-- Play Button -->
+        <ImageButton
+            android:id="@+id/btnPlay"
+            android:src="@drawable/btn_play"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@null"/>
+        <!-- Next Button -->
+    </LinearLayout>
+
+
+
+</RelativeLayout>

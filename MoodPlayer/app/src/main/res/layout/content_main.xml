@@ -10,10 +10,41 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.player.mood.moodplayer.MainActivity"
-    tools:showIn="@layout/activity_main">
+    tools:showIn="@layout/activity_main"
+    android:background="@color/White"
+    >
+
+    <EditText
+        android:text="20:15:10:26:62:53"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/mac_address"
+        android:textColor="@color/black"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Play!"
+        android:id="@+id/play_button"
+        android:layout_below="@+id/mac_address"
+        android:layout_marginTop="60dp"
+        android:layout_alignRight="@+id/textView3"
+        android:layout_alignEnd="@+id/textView3"
+        android:layout_alignLeft="@+id/textView3"
+        android:layout_alignStart="@+id/textView3" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="MoodPlayer!!!" />
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Bitalino MAC Address"
+        android:textStyle="bold"
+        android:id="@+id/textView3"
+        android:layout_marginBottom="114dp"
+        android:layout_above="@+id/mac_address"
+        android:textColor="@color/black"
+        android:layout_centerHorizontal="true" />
+
 </RelativeLayout>
