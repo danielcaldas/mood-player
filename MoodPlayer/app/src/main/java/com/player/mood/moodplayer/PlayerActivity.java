@@ -27,7 +27,13 @@ import com.player.mood.moodplayer.funcmode.BeastMode;
 import com.player.mood.moodplayer.funcmode.FuncMode;
 import com.player.mood.moodplayer.funcmode.RelaxedMode;
 
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -116,7 +122,12 @@ public class PlayerActivity extends AppCompatActivity {
         isMusicPlaying = false;
         songTitle = (TextView) findViewById(R.id.songTitle);
         // CURRENT_SONG = "Me Gustas Tu";
-        mp = MediaPlayer.create(getApplicationContext(), songsResIds.get(CURRENT_SONG));
+        //mp = MediaPlayer.create(getApplicationContext(), songsResIds.get(CURRENT_SONG));
+
+        /*
+        mp = new MediaPlayer();
+        mp.setOnPreparedListener(this); // implements MediaPlayer.OnPreparedListener
+        */
 
         playStopButton = (ImageButton) findViewById(R.id.btnPlay);
         playStopButton.setOnClickListener(new View.OnClickListener() {
@@ -416,4 +427,5 @@ public class PlayerActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
 }
