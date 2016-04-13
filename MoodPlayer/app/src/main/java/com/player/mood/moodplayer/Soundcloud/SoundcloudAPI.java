@@ -59,4 +59,9 @@ public class SoundcloudAPI {
         public JSONObject getTrack(int trackID) throws Exception {
             return GET("http://api.soundcloud.com/tracks/"+trackID+"?client_id="+this.APIKEY);
         }
+
+        public String getStreamLocation(int trackID) throws Exception {
+            JSONObject obj = GET("http://api.soundcloud.com/tracks/"+trackID+"/stream?client_id="+this.APIKEY);
+            return obj.get("location").toString();
+        }
 }
