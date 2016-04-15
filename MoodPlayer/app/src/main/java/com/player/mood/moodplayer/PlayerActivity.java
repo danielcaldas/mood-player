@@ -351,7 +351,7 @@ public class PlayerActivity extends AppCompatActivity {
                     getEnergyFromSoundcloudSongs();
                     break;
                 default:
-                    playSoundcloudSongs();
+                    getEnergyFromSoundcloudSongs();
                     break;
             }
         }
@@ -396,6 +396,7 @@ public class PlayerActivity extends AppCompatActivity {
         }
 
         public void getEnergyFromSoundcloudSongs() {
+            int min = 10000;
             try {
                 SoundcloudAPI api = new SoundcloudAPI("8b25558cba269257fb6551afaad6a4a0");
                 SoundcloudPlaylist playlist = new SoundcloudPlaylist(api.getPlaylist(215410113));
@@ -403,7 +404,15 @@ public class PlayerActivity extends AppCompatActivity {
                 for (SongInfo si : songinfo){
                     try {
                         Double energy = getEnergy(si.getArtist(), si.getTitle());
-                        energyValues.put(si.getTitle(),energy);
+                        if (energy!=null) {
+                            energyValues.put(si.getTitle(), energy);
+                            int diff = (int) Math.abs(energy - GLOBAL_ENERGY);
+
+                            if (diff < min) {
+                                min = diff;
+                                CURRENT_SONG = si.getTitle();
+                            }
+                        }
                     }
                     catch (EchoNestException e){Log.d("EchoNestException", e.getMessage());}
                 }
