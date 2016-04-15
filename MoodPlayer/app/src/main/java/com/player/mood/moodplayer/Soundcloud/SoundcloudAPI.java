@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package soundcloud;
+package com.player.mood.moodplayer.Soundcloud;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

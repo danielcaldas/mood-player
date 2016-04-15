@@ -26,6 +26,9 @@ import com.player.mood.moodplayer.bitalino.deviceandroid.BitalinoAndroidDevice;
 import com.player.mood.moodplayer.funcmode.BeastMode;
 import com.player.mood.moodplayer.funcmode.FuncMode;
 import com.player.mood.moodplayer.funcmode.RelaxedMode;
+import com.player.mood.moodplayer.Soundcloud.SongInfo;
+import com.player.mood.moodplayer.Soundcloud.SoundcloudPlaylist;
+import com.player.mood.moodplayer.Soundcloud.SoundcloudAPI;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -54,6 +57,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private static String DEFAULT_MUSIC_TITLE = "Just squeeze your arm!";
     private static String CURRENT_SONG;
+    private static String SONG_SOURCE = "Soundcloud";
 
     // View
     private ImageButton playStopButton;
@@ -328,20 +332,35 @@ public class PlayerActivity extends AppCompatActivity {
 
     class FillEnergyThread extends Thread {
 
-        private Map<String,Double> energyValues;
+        private Map<String, Double> energyValues;
         private List<Integer> fields;
         private Context context;
 
-        public FillEnergyThread(Map<String,Double> BPMs, Context context, List<Integer> fields){
+        public FillEnergyThread(Map<String, Double> BPMs, Context context, List<Integer> fields) {
             this.energyValues = BPMs;
             this.context = context;
             this.fields = fields;
         }
 
-        public void run (){
+        public void run() {
+            switch (SONG_SOURCE) {
+                case "Local":
+                    getEnergyFromLocalSongs();
+                    break;
+                case "Soundcloud":
+                    getEnergyFromSoundcloudSongs();
+                    break;
+                default:
+                    playSoundcloudSongs();
+                    break;
+            }
+        }
+
+
+        public void getEnergyFromLocalSongs() {
             double tempo;
             int min = 10000;
-            for(int i : fields) {
+            for (int i : this.fields) {
                 Resources res = this.context.getResources();
                 AssetFileDescriptor afd = res.openRawResourceFd(i);
                 MediaMetadataRetriever mmr = new MediaMetadataRetriever();
@@ -353,7 +372,7 @@ public class PlayerActivity extends AppCompatActivity {
 
                 try {
                     tempo = getEnergy(albumName, songTitle);
-                    songsResIds.put(songTitle,i);
+                    songsResIds.put(songTitle, i);
                 } catch (EchoNestException e) {
                     Log.d("TAG", e.getMessage());
                     tempo = 0;
@@ -366,16 +385,35 @@ public class PlayerActivity extends AppCompatActivity {
                  */
                 int diff = (int) Math.abs(tempo - GLOBAL_ENERGY);
 
-                if(diff < min) {
+                if (diff < min) {
                     min = diff;
                     CURRENT_SONG = songTitle;
                 }
-                /*-----------------------------------------------*/
+                    /*-----------------------------------------------*/
+            }
+            for (Map.Entry<String, Double> entry : energyValues.entrySet())
+                Log.d("tos", entry.getKey() + " - " + entry.getValue());
+        }
+
+        public void getEnergyFromSoundcloudSongs() {
+            try {
+                SoundcloudAPI api = new SoundcloudAPI("8b25558cba269257fb6551afaad6a4a0");
+                SoundcloudPlaylist playlist = new SoundcloudPlaylist(api.getPlaylist(215410113));
+                ArrayList<SongInfo> songinfo = playlist.getSongInfo();
+                for (SongInfo si : songinfo){
+                    try {
+                        Double energy = getEnergy(si.getArtist(), si.getTitle());
+                        energyValues.put(si.getTitle(),energy);
+                    }
+                    catch (EchoNestException e){Log.d("EchoNestException", e.getMessage());}
+                }
+                for (Map.Entry<String, Double> entry : energyValues.entrySet())
+                    Log.d("tos", entry.getKey() + " - " + entry.getValue());
 
             }
-            for (Map.Entry<String,Double> entry: energyValues.entrySet())
-                Log.d("tos", entry.getKey()+" - "+entry.getValue());
+            catch (Exception e) {Log.d("Soundcloud", e.getMessage());}
         }
+
 
         public Double getEnergy(String artistName, String title) throws EchoNestException {
             EchoNestAPI echoNest = new EchoNestAPI("WNCVO3LISNWOOHCDS");
