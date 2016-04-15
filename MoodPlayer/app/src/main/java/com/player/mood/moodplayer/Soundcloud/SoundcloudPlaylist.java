@@ -3,12 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package soundcloud;
+package com.player.mood.moodplayer.Soundcloud;
 
-import java.util.ArrayList;
-import javafx.util.Pair;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import java.util.ArrayList;
 
 /**
  *
