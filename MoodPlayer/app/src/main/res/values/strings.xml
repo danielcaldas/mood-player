@@ -4,5 +4,6 @@
     <string name="default_player_title">Just squeeze your hand to play!</string>
     <!-- soundcloud-->
     <string name="soundcloud_client_id">a2a51bf7a7f1451dbb021d0c5b6672c9</string>
+    <string name="soundcloud_client_id_2">8b25558cba269257fb6551afaad6a4a0</string>
     <string name="soundcloud_client_secret">29f6b7d804811abfc94d35b9af18c207</string>
 </resources>

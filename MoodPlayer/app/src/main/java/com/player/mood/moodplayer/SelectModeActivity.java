@@ -34,7 +34,7 @@ public class SelectModeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.select_mode_activity);
+        setContentView(R.layout.activity_select_mode);
 
         beastButton = (Button) findViewById(R.id.play_beast_mode);
         beastButton.setOnClickListener(new View.OnClickListener() {
@@ -77,7 +77,8 @@ public class SelectModeActivity extends AppCompatActivity {
             }
         });
 
-        calibrateSuccessfull = false;
+        // calibrateSuccessfull = false;
+        calibrateSuccessfull = true;
     }
 
     @Override

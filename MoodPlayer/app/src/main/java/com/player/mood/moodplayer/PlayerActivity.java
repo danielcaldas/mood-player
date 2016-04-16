@@ -1,5 +1,6 @@
 package com.player.mood.moodplayer;
 
+import android.app.ProgressDialog;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -31,9 +32,9 @@ import java.util.concurrent.ExecutionException;
 
 
 /**
- * This class is a mp3 player controlled by biosignals.
+ * This class is a mp3 activity_player controlled by biosignals.
  *
- * The player activity for moodplayer is its core functionality. Is controls music flow,
+ * The activity_player activity for moodplayer is its core functionality. Is controls music flow,
  * Bitalino sensors' events and exterior api resources management as echonest metainfo and
  * soundcloud tracks.
  *
@@ -49,6 +50,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
     private ImageButton nextButton;
     private ImageButton previousButton;
     private TextView songTitle;
+    private ProgressDialog progress;
 
     // Media Player & Logic
     private MediaPlayer mp;
@@ -62,18 +64,21 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
 
     // Soundcloud settings
     public static String SONG_SOURCE = "Soundcloud";
+
     public static final String SOUNDCLOUD_PLAYLIST = "215410113";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.player);
+        setContentView(R.layout.activity_player);
 
         // Set layout
+        progress = ProgressDialog.show(this, "MoodPlayer is preparing everything for you",
+                "Loading...", true);
         songTitle = (TextView) findViewById(R.id.song_title);
         songTitle.setText(getResources().getString(R.string.default_player_title));
 
-        // Set player mode
+        // Set activity_player mode
         if (SelectModeActivity.PLAYER_MODE.equals(SelectModeActivity.BEAST_MODE)) {
             this.functioningMode = new BeastMode();
             Const.GLOBAL_ENERGY = 0.6f;
@@ -174,11 +179,11 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
         inflater = this.getLayoutInflater();*/
 
         // setUpAndStartBitalino();
+
+        // Check if user has already downloaded songs & energy
         setUpPlayerResources();
         setUpMediaPlayer();
         isMusicPlaying = false;
-
-
     }
 
     @Override
@@ -201,7 +206,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
     @Override
     public void onPrepared(MediaPlayer mp) {
         isMediaPlayerPrepared = true;
-        mp.start();
+        mp.start(); // first start is needed before play
     }
 
     public void setUpPlayerResources() {
@@ -240,6 +245,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
         mp.setOnPreparedListener(this);
         isMediaPlayerPrepared = false;
         currentPosition = -1;
+        progress.dismiss();
     }
 
     public void changeTrack(String direction) throws IOException {
@@ -379,24 +385,24 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
     public void findTheRightSong(double newEnergy) {
         double maxDiffNegative = 0;
         double minDiffPositive = 1000;
-        String song=Const.CURRENT_SONG;
+        String song = Const.CURRENT_SONG;
 
-        if(SelectModeActivity.PLAYER_MODE.equals(SelectModeActivity.BEAST_MODE)) {
+        if (SelectModeActivity.PLAYER_MODE.equals(SelectModeActivity.BEAST_MODE)) {
             for (Map.Entry<String, Double> entry : tracksManager.getTracksEnergy().entrySet()) {
                 if (!entry.getKey().equals(Const.CURRENT_SONG)) {
                     double diff = newEnergy - entry.getValue();
-                    if(diff < minDiffPositive) {
+                    if (diff < minDiffPositive) {
                         minDiffPositive = diff;
                         song = entry.getKey();
                         Log.i("BITALINO BEAST", Const.CURRENT_SONG);
                     }
                 }
             }
-        } else if(SelectModeActivity.PLAYER_MODE.equals(SelectModeActivity.RELAX_MODE)) {
+        } else if (SelectModeActivity.PLAYER_MODE.equals(SelectModeActivity.RELAX_MODE)) {
             for (Map.Entry<String, Double> entry : tracksManager.getTracksEnergy().entrySet()) {
                 if (!entry.getKey().equals(Const.CURRENT_SONG)) {
                     double diff = entry.getValue() - newEnergy;
-                    if(diff > maxDiffNegative) {
+                    if (diff > maxDiffNegative) {
                         maxDiffNegative = diff;
                         song = entry.getKey();
                         Log.i("BITALINO RELAX", Const.CURRENT_SONG);
@@ -405,7 +411,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
             }
         }
 
-        if(!Const.CURRENT_SONG.equals(song)) {
+        if (!Const.CURRENT_SONG.equals(song)) {
             Const.CURRENT_SONG = song;
             tracksManager.setCurrentTrack(song);
             try {
