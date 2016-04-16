@@ -1,7 +1,6 @@
 package com.player.mood.moodplayer;
 
 import android.app.ProgressDialog;
-import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;

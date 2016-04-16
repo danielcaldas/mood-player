@@ -5,8 +5,6 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -15,16 +13,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.Toast;
-
-import com.player.mood.moodplayer.soundcloud.SoundcloudAPI;
-import com.player.mood.moodplayer.soundcloud.SoundcloudPlaylist;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -72,9 +65,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
-        // job has res with sound cloud content
-
     }
 
     /**
