@@ -3,10 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package soundcloud;
+package com.player.mood.moodplayer.soundcloud;
+
+import android.util.Log;
 
 import java.util.ArrayList;
-import javafx.util.Pair;
+import java.util.HashMap;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -17,24 +20,27 @@ import org.json.simple.JSONObject;
 public class SoundcloudPlaylist {
     
     private JSONObject obj;
-    
+
     public SoundcloudPlaylist(JSONObject obj){
         this.obj = obj;
     }
-    
-    public ArrayList<SongInfo> getSongInfo(){
-        String title,artist, streamURL;
+
+    public ArrayList<SoundcloudTrack> getSongsInfo(){
+        String id, title,artist, streamURL, locationURL = "";
         Long duration;
-        ArrayList<SongInfo> result = new ArrayList<SongInfo>();
+        ArrayList<SoundcloudTrack> result = new ArrayList<SoundcloudTrack>();
         JSONArray tracks = (JSONArray)this.obj.get("tracks");
         JSONObject t = null;
         for(int i=0;i<tracks.size();i++){
             t = (JSONObject) tracks.get(i);
+            id = String.valueOf(t.get("id"));
             title = filterTitle(t.get("title").toString());
             artist = ((JSONObject)t.get("user")).get("username").toString();
             streamURL = t.get("stream_url").toString();
             duration = (Long)t.get("duration");
-            SongInfo si = new SongInfo(artist,title,streamURL,duration);
+
+            SoundcloudTrack si = new SoundcloudTrack(id, artist, title, streamURL, duration);
+
             result.add(si);
         }
         return result;
@@ -47,5 +53,5 @@ public class SoundcloudPlaylist {
         }
         return title;
     }
-    
+
 }

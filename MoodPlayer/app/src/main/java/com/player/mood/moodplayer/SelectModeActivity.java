@@ -3,28 +3,17 @@ package com.player.mood.moodplayer;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
+import com.player.mood.moodplayer.bitalino.Const;
 import com.player.mood.moodplayer.bitalino.comm.BITalinoFrame;
 import com.player.mood.moodplayer.bitalino.deviceandroid.BitalinoAndroidDevice;
-
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by daniel on 12-03-2016.
@@ -40,6 +29,8 @@ public class SelectModeActivity extends AppCompatActivity {
     private Button relaxButton;
     private Button calibrate;
 
+    private boolean calibrateSuccessfull;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,9 +40,13 @@ public class SelectModeActivity extends AppCompatActivity {
         beastButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                PLAYER_MODE = BEAST_MODE;
-                Intent i = new Intent(SelectModeActivity.this, PlayerActivity.class);
-                startActivity(i);
+                if(!calibrateSuccessfull) {
+                    Toast.makeText(getApplicationContext(), "Please calibrate sensors before proceed.", Toast.LENGTH_LONG).show();
+                } else {
+                    PLAYER_MODE = BEAST_MODE;
+                    Intent i = new Intent(SelectModeActivity.this, PlayerActivity.class);
+                    startActivity(i);
+                }
             }
         });
 
@@ -59,9 +54,13 @@ public class SelectModeActivity extends AppCompatActivity {
         relaxButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                PLAYER_MODE = RELAX_MODE;
-                Intent i = new Intent(SelectModeActivity.this, PlayerActivity.class);
-                startActivity(i);
+                if(!calibrateSuccessfull) {
+                    Toast.makeText(getApplicationContext(), "Please calibrate sensors before proceed.", Toast.LENGTH_LONG).show();
+                } else {
+                    PLAYER_MODE = RELAX_MODE;
+                    Intent i = new Intent(SelectModeActivity.this, PlayerActivity.class);
+                    startActivity(i);
+                }
             }
         });
 
@@ -69,14 +68,16 @@ public class SelectModeActivity extends AppCompatActivity {
         calibrate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Toast.makeText(getApplicationContext(), "Start calibrating...", Toast.LENGTH_SHORT).show();
                 try {
-                    boolean isOK = startCalibration();
+                    startCalibration();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
         });
 
+        calibrateSuccessfull = false;
     }
 
     @Override
@@ -109,11 +110,9 @@ public class SelectModeActivity extends AppCompatActivity {
      * @return true if Bitalino calibrates successfully
      */
     public boolean startCalibration() throws InterruptedException {
-        Toast.makeText(getApplicationContext(), "Start calibrating...", Toast.LENGTH_SHORT).show();
-        final BitalinoAndroidDevice bdev = new BitalinoAndroidDevice(MainActivity.MAC_ADDRESS);
         int[] actChan = new int[]{0};
+        final BitalinoAndroidDevice bdev = new BitalinoAndroidDevice(MainActivity.MAC_ADDRESS);
         bdev.connect(Const.DEFAULT_FREQ, actChan);
-        Thread.sleep(Const.DEFAULT_FREQ); // Danger Zone!
         bdev.start();
 
         final Handler h = new Handler();
@@ -122,23 +121,40 @@ public class SelectModeActivity extends AppCompatActivity {
             public void run() {
                 BITalinoFrame[] dataFrame = bdev.read(Const.N_FRAMES);
                 int sumMuscle = 0;
-                for (int i = 0; i < dataFrame.length; i++) {
-                    sumMuscle += Math.abs(dataFrame[i].getAnalog(0) - Const.MUSCLE_MEAN);
+                for (int i = 0; i < (dataFrame.length - 1); i++) {
+                    sumMuscle += Math.abs(dataFrame[i+1].getAnalog(0) - dataFrame[i].getAnalog(0));
                 }
-                int meanMuscle = sumMuscle / dataFrame.length;
+                int meanMuscle = sumMuscle / (dataFrame.length - 1);
                 Const.MUSCLE_MEAN = meanMuscle;
                 Const.CALIBRATION_COUNTER++;
 
                 Log.i("CALIBRATE MEAN MUSCLE", String.valueOf(Const.MUSCLE_MEAN));
 
-                if(Const.CALIBRATION_COUNTER < 500) {
+                if(Const.MUSCLE_MEAN > Const.MUSCLE_PICK_MAX) {
+                    Const.MUSCLE_PICK_MAX = Const.MUSCLE_MEAN;
+                }
+
+                if(Const.CALIBRATION_COUNTER < Const.CALIBRATION_CYCLES) {
                     h.postDelayed(this, Const.DELAY);
                 } else {
                     Thread.interrupted();
-                    Toast.makeText(getApplicationContext(), "Calibrate success!", Toast.LENGTH_SHORT).show();
+
+                    Const.MUSCLE_PICK_MIN = Const.MUSCLE_PICK_MAX - (int)(Const.MUSCLE_PICK_MIN_PER_DEVIATION * Const.MUSCLE_PICK_MAX);
+                    Const.MUSCLE_PICK_MAX = Const.MUSCLE_PICK_MAX - (int)(Const.MUSCLE_PICK_MAX_PER_DEVIATION * Const.MUSCLE_PICK_MAX);
+
                     Log.i("FINAL MEAN MUSCLE", String.valueOf(Const.MUSCLE_MEAN));
-                    Const.MUSCLE_PICK = (int)(Const.MUSCLE_MEAN * 1.2);
-                    Log.i("FINAL MUSCLE PICK", String.valueOf(Const.MUSCLE_PICK));
+                    Log.i("FINAL PICK INTERVAL", "["+String.valueOf(Const.MUSCLE_PICK_MIN)+","+String.valueOf(Const.MUSCLE_PICK_MAX)+"]");
+
+                    if(Const.MUSCLE_PICK_MIN <= ( Const.MUSCLE_MEAN * 1.10) ) {
+                        Toast.makeText(getApplicationContext(), "Sorry, calibration failed, please try again :(", Toast.LENGTH_LONG).show();
+                        calibrateSuccessfull=false;
+                    } else {
+                        Toast.makeText(getApplicationContext(), "Calibration success!", Toast.LENGTH_SHORT).show();
+                        calibrateSuccessfull=true;
+                        beastButton.setClickable(true);
+                        relaxButton.setClickable(true);
+                    }
+
                     bdev.stop();
                     return;
                 }

@@ -3,7 +3,7 @@
     android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/White">
 
     <TextView
-        android:id="@+id/songTitle"
+        android:id="@+id/song_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"
@@ -29,6 +29,12 @@
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true">
         <!-- Previous Button -->
+        <ImageButton
+            android:id="@+id/btnPrevious"
+            android:src="@drawable/btn_previous"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@null"/>
         <!-- Play Button -->
         <ImageButton
             android:id="@+id/btnPlay"
@@ -37,6 +43,12 @@
             android:layout_height="wrap_content"
             android:background="@null"/>
         <!-- Next Button -->
+        <ImageButton
+            android:id="@+id/btnNext"
+            android:src="@drawable/btn_next"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@null"/>
     </LinearLayout>
 
 
