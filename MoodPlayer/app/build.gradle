@@ -26,4 +26,5 @@ dependencies {
     compile 'com.android.support:design:23.1.1'
     compile 'com.google.guava:guava:r05'
     compile 'com.googlecode.jen-api:jen-api:4.x.p'
+    compile 'com.google.code.gson:gson:2.5'
 }

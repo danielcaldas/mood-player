@@ -1,7 +1,13 @@
 package com.player.mood.moodplayer;
 
+import android.app.Application;
+import android.content.Context;
+import android.content.SharedPreferences;
+
+import com.google.gson.Gson;
 import com.player.mood.moodplayer.soundcloud.SoundcloudTrack;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,7 +17,7 @@ import java.util.Map;
  * @author daniel
  * @date 15-04-2016.
  */
-public class TracksManager {
+public class TracksManager implements Serializable {
     private HashMap<String,SoundcloudTrack> tracks; // soundcloudid, SoundcloudTrack
     private HashMap<String,Double> tracksEnergy; // soundcloudid, energy
     private String[] tracksIDs;
@@ -112,5 +118,22 @@ public class TracksManager {
                 break;
             }
         }
+    }
+
+    // Save & Load classes for persist TracksManager
+
+    public void save(SharedPreferences mPrefs) {
+        SharedPreferences.Editor prefsEditor = mPrefs.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(this);
+        prefsEditor.putString(this.getClass().getName(), json);
+        prefsEditor.commit();
+    }
+
+    public TracksManager load(SharedPreferences mPrefs) {
+        Gson gson = new Gson();
+        String json = mPrefs.getString(this.getClass().getName(), "");
+        TracksManager tm = gson.fromJson(json, TracksManager.class);
+        return tm;
     }
 }

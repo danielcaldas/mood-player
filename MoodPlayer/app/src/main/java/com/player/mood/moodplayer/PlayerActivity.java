@@ -1,6 +1,7 @@
 package com.player.mood.moodplayer;
 
 import android.app.ProgressDialog;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -66,6 +67,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
     public static String SONG_SOURCE = "Soundcloud";
 
     public static final String SOUNDCLOUD_PLAYLIST = "215410113";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -181,7 +183,11 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
         // setUpAndStartBitalino();
 
         // Check if user has already downloaded songs & energy
-        setUpPlayerResources();
+        tracksManager = new TracksManager().load(getPreferences(MODE_PRIVATE));
+        if(tracksManager==null) {
+            Log.i("TracksManager", "Tracks file not found!");
+            setUpPlayerResources();
+        }
         setUpMediaPlayer();
         isMusicPlaying = false;
     }
@@ -229,7 +235,10 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
             if (urls != null) {
                 tracksManager.setLocationURLs(urls);
                 // Unmark to see tracks info in Log
-                Log.i("SoundCloud", tracksManager.toString());
+                // Log.i("SoundCloud", tracksManager.toString());
+
+                // Save tracksmanager
+                tracksManager.save(getPreferences(MODE_PRIVATE));
             }
         } catch (InterruptedException e) {
             Log.i("Soundcloud", e.getMessage());
