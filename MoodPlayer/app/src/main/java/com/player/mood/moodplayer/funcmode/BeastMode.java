@@ -3,8 +3,11 @@ package com.player.mood.moodplayer.funcmode;
 import android.util.Log;
 
 /**
+ * This class encapsulates the algorithm BeastMode to choose songs
+ * using EDA values.
  *
  * @author Cortez
+ * @date 2016.03.11
  */
 public class BeastMode implements FuncMode {
 

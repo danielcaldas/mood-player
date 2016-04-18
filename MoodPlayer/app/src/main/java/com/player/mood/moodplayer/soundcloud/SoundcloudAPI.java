@@ -28,10 +28,6 @@ public class SoundcloudAPI {
         // optional default is GET
         con.setRequestMethod("GET");
 
-        int responseCode = con.getResponseCode();
-        System.out.println("\nSending 'GET' request to URL : " + url);
-        System.out.println("Response Code : " + responseCode);
-
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(con.getInputStream()));
         String inputLine;
@@ -42,7 +38,6 @@ public class SoundcloudAPI {
         }
         in.close();
 
-        //print result
         JSONParser parser = new JSONParser();
         JSONObject json = (JSONObject) parser.parse(response.toString());
         return json;

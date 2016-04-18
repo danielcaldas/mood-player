@@ -16,7 +16,11 @@ import com.player.mood.moodplayer.bitalino.comm.BITalinoFrame;
 import com.player.mood.moodplayer.bitalino.deviceandroid.BitalinoAndroidDevice;
 
 /**
- * Created by daniel on 12-03-2016.
+ * This activity provides a simple interface so that the user can set up his
+ * media player session, by calibrating sensors and choosing the moodplayer mode.
+ *
+ * @author jdc
+ * @version 2016.03.11
  */
 public class SelectModeActivity extends AppCompatActivity {
 
@@ -77,8 +81,7 @@ public class SelectModeActivity extends AppCompatActivity {
             }
         });
 
-        // calibrateSuccessfull = false;
-        calibrateSuccessfull = true;
+        calibrateSuccessfull = false;
     }
 
     @Override
@@ -129,7 +132,7 @@ public class SelectModeActivity extends AppCompatActivity {
                 Const.MUSCLE_MEAN = meanMuscle;
                 Const.CALIBRATION_COUNTER++;
 
-                Log.i("CALIBRATE MEAN MUSCLE", String.valueOf(Const.MUSCLE_MEAN));
+                // Log.i("CALIBRATE MEAN MUSCLE", String.valueOf(Const.MUSCLE_MEAN));
 
                 if(Const.MUSCLE_MEAN > Const.MUSCLE_PICK_MAX) {
                     Const.MUSCLE_PICK_MAX = Const.MUSCLE_MEAN;
@@ -143,8 +146,8 @@ public class SelectModeActivity extends AppCompatActivity {
                     Const.MUSCLE_PICK_MIN = Const.MUSCLE_PICK_MAX - (int)(Const.MUSCLE_PICK_MIN_PER_DEVIATION * Const.MUSCLE_PICK_MAX);
                     Const.MUSCLE_PICK_MAX = Const.MUSCLE_PICK_MAX - (int)(Const.MUSCLE_PICK_MAX_PER_DEVIATION * Const.MUSCLE_PICK_MAX);
 
-                    Log.i("FINAL MEAN MUSCLE", String.valueOf(Const.MUSCLE_MEAN));
-                    Log.i("FINAL PICK INTERVAL", "["+String.valueOf(Const.MUSCLE_PICK_MIN)+","+String.valueOf(Const.MUSCLE_PICK_MAX)+"]");
+                    // Log.i("FINAL MEAN MUSCLE", String.valueOf(Const.MUSCLE_MEAN));
+                    // Log.i("FINAL PICK INTERVAL", "["+String.valueOf(Const.MUSCLE_PICK_MIN)+","+String.valueOf(Const.MUSCLE_PICK_MAX)+"]");
 
                     if(Const.MUSCLE_PICK_MIN <= ( Const.MUSCLE_MEAN * 1.10) ) {
                         Toast.makeText(getApplicationContext(), "Sorry, calibration failed, please try again :(", Toast.LENGTH_LONG).show();

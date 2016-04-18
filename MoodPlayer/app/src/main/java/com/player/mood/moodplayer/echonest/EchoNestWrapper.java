@@ -1,15 +1,22 @@
 package com.player.mood.moodplayer.echonest;
 
+import android.util.Log;
+
 import com.echonest.api.v4.EchoNestAPI;
 import com.echonest.api.v4.EchoNestException;
 import com.echonest.api.v4.Song;
 import com.echonest.api.v4.SongParams;
+import com.player.mood.moodplayer.TracksManager;
+import com.player.mood.moodplayer.bitalino.Const;
+import com.player.mood.moodplayer.soundcloud.SoundcloudAPI;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * An echonest API wrapper to perform some information fetching operations on songs.
- * @author jdc
+ *
+ * @author Cortez
  * @date 2016.15.04
  */
 public class EchoNestWrapper {

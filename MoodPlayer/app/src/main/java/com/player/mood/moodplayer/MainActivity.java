@@ -30,6 +30,12 @@ import java.util.regex.Matcher;
 
 import java.util.regex.Pattern;
 
+/**
+ * Main activity contains the land page of the app.
+ *
+ * @author jdc
+ * @date 2016.04.14
+ */
 public class MainActivity extends AppCompatActivity {
 
     public static String MAC_ADDRESS;

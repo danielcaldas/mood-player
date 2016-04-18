@@ -1,7 +1,5 @@
 package com.player.mood.moodplayer;
 
-import android.app.Application;
-import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.google.gson.Gson;
@@ -12,20 +10,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * (SUMMARY)
+ * This class holds tracks information and provides
+ * methods to control the Media Player flow.
  *
- * @author daniel
- * @date 15-04-2016.
+ * @author jdc
+ * @date 2016.04.15
  */
 public class TracksManager implements Serializable {
     private HashMap<String,SoundcloudTrack> tracks; // soundcloudid, SoundcloudTrack
     private HashMap<String,Double> tracksEnergy; // soundcloudid, energy
+
     private String[] tracksIDs;
     private int currentTrackIndex;
 
     public TracksManager() {
         this.tracks = new HashMap<>();
         this.tracksEnergy = new HashMap<>();
+
         this.tracksIDs=null;
         this.currentTrackIndex=0;
     }

@@ -61,7 +61,7 @@ public class SoundCloudPlayListAsyncFetcher extends AsyncTask<String,Void,Tracks
                     Log.d("EchoNestException", e.getMessage());
                 }
             }
-            Log.d("EchoNest", tracksManager.toString());
+            // Log.d("EchoNest", tracksManager.toString());
 
         }
         catch (Exception e) {

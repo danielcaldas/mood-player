@@ -1,8 +1,10 @@
 package com.player.mood.moodplayer;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -33,7 +35,7 @@ import java.util.concurrent.ExecutionException;
 
 /**
  * This class is a mp3 activity_player controlled by biosignals.
- *
+ * <p/>
  * The activity_player activity for moodplayer is its core functionality. Is controls music flow,
  * Bitalino sensors' events and exterior api resources management as echonest metainfo and
  * soundcloud tracks.
@@ -44,13 +46,14 @@ import java.util.concurrent.ExecutionException;
  */
 public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnPreparedListener {
 
+    // Player configuration
+    public static boolean BiTALINO_ON = true;
+
     // Layout
-    private LayoutInflater inflater;
     private ImageButton playStopButton;
     private ImageButton nextButton;
     private ImageButton previousButton;
     private TextView songTitle;
-    private ProgressDialog progress;
 
     // Media Player & Logic
     private MediaPlayer mp;
@@ -63,9 +66,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
     public static TracksManager tracksManager;
 
     // Soundcloud settings
-    public static String SONG_SOURCE = "Soundcloud";
-
-    public static final String SOUNDCLOUD_PLAYLIST = "215410113";
+    public static String SOUNDCLOUD_PLAYLIST = "215410113";
 
 
     @Override
@@ -74,8 +75,6 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
         setContentView(R.layout.activity_player);
 
         // Set layout
-        progress = ProgressDialog.show(this, "MoodPlayer is preparing everything for you",
-                "Loading...", true);
         songTitle = (TextView) findViewById(R.id.song_title);
         songTitle.setText(getResources().getString(R.string.default_player_title));
 
@@ -135,11 +134,11 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
             @Override
             public void onClick(View v) {
                 // Go to next Song
-                try {
-                    changeTrack("NEXT");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                playStopButton.setImageResource(R.drawable.btn_pause);
+                mp.stop();
+                setUpMediaPlayer();
+                changeTrack("NEXT");
+
             }
         });
 
@@ -148,46 +147,21 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
             @Override
             public void onClick(View v) {
                 // Go to previous Song
-                try {
-                    changeTrack("PREVIOUS");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                playStopButton.setImageResource(R.drawable.btn_pause);
+                mp.stop();
+                setUpMediaPlayer();
+                changeTrack("PREVIOUS");
             }
         });
 
-        // Set up and start all components
-        // Set song energy EchoNest API
-        /*songsResIds = new HashMap<String,Integer>();
-
-        ArrayList<Integer> list = new ArrayList<Integer>();
-        Field[] fields = R.raw.class.getFields();
-        for (Field f : fields) {
-            try {
-                list.add(f.getInt(null));
-            } catch (IllegalArgumentException e) {
-            } catch (IllegalAccessException e) {}
-        }*/
-
-        // Get songs meta-info
-        /*values = new HashMap<>();
-        Thread fillEnergy = new FillEnergyThread(values,getApplicationContext(),list);
-        fillEnergy.start();
-        try {
-            fillEnergy.join();
-        } catch (Exception e){}
-
-        inflater = this.getLayoutInflater();*/
-
-        // setUpAndStartBitalino();
 
         // Check if user has already downloaded songs & energy
-        tracksManager = new TracksManager().load(getPreferences(MODE_PRIVATE));
-        if(tracksManager==null) {
-            Log.i("TracksManager", "Tracks file not found!");
-            setUpPlayerResources();
-        }
+        tracksManager = new TracksManager();
+        setUpPlayerResources();
         setUpMediaPlayer();
+        if (BiTALINO_ON == true) {
+            setUpAndStartBiTalino();
+        }
         isMusicPlaying = false;
     }
 
@@ -214,6 +188,14 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
         mp.start(); // first start is needed before play
     }
 
+    public void setUpMediaPlayer() {
+        mp = new MediaPlayer();
+        mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mp.setOnPreparedListener(this);
+        isMediaPlayerPrepared = false;
+        currentPosition = -1;
+    }
+
     public void setUpPlayerResources() {
         SoundcloudAPI api = new SoundcloudAPI(getResources().getString(R.string.soundcloud_client_id));
 
@@ -222,9 +204,9 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
         try {
             tracksManager = playlist.execute(SOUNDCLOUD_PLAYLIST).get();
         } catch (InterruptedException e) {
-            Log.i("Soundcloud", e.getMessage());
+            Log.i("Soundcloud", e.toString());
         } catch (ExecutionException e) {
-            Log.i("Soundcloud", e.getMessage());
+            Log.i("Soundcloud", e.toString());
         }
 
         // 2. For each song with a energy value, get its locationURL
@@ -233,55 +215,58 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
             HashMap<String, String> urls = lUrls.execute(tracksManager.getTracksIds()).get();
             if (urls != null) {
                 tracksManager.setLocationURLs(urls);
-                // Unmark to see tracks info in Log
-                // Log.i("SoundCloud", tracksManager.toString());
-
-                // Save tracksmanager
-                tracksManager.save(getPreferences(MODE_PRIVATE));
+                tracksManager.save(getPreferences(MODE_PRIVATE)); // Save tracksmanager
             }
         } catch (InterruptedException e) {
-            Log.i("Soundcloud", e.getMessage());
+            Log.i("Soundcloud", e.toString());
         } catch (ExecutionException e) {
-            Log.i("Soundcloud", e.getMessage());
+            Log.i("Soundcloud", e.toString());
         }
-
     }
 
-    public void setUpMediaPlayer() {
-        mp = new MediaPlayer();
-        mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        mp.setOnPreparedListener(this);
-        isMediaPlayerPrepared = false;
-        currentPosition = -1;
-        progress.dismiss();
-    }
-
-    public void changeTrack(String direction) throws IOException {
+    public void changeTrack(String direction) {
         mp.stop();
         setUpMediaPlayer();
         switch (direction) {
             case "NEXT":
-                mp.setDataSource(tracksManager.getNextSongURL());
+                try {
+                    mp.setDataSource(tracksManager.getNextSongURL());
+                    songTitle.setText(tracksManager.getCurrentTrackTitle());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
             case "PREVIOUS":
-                mp.setDataSource(tracksManager.getPreviousSongURL());
+                try {
+                    mp.setDataSource(tracksManager.getPreviousSongURL());
+                    songTitle.setText(tracksManager.getCurrentTrackTitle());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
             case "EDA_ACTION":
-                mp.setDataSource(tracksManager.getCurrentSongURL());
+                try {
+                    mp.setDataSource(tracksManager.getCurrentSongURL());
+                    songTitle.setText(tracksManager.getCurrentTrackTitle());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
         }
-        mp.prepare();
-        songTitle.setText(tracksManager.getCurrentTrackTitle());
-        isMediaPlayerPrepared = true;
-        isMusicPlaying = true;
+        try {
+            mp.prepare();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
+
 
     /*-----------------------------------------------------------------------------------------------------------*/
     /*--------------------------------------- BiTALINO (START) --------------------------------------------------*/
     /*-----------------------------------------------------------------------------------------------------------*/
 
-    public void setUpAndStartBitalino() {
+    public void setUpAndStartBiTalino() {
         try {
             Toast.makeText(getApplicationContext(), "Starting Sensors...", Toast.LENGTH_SHORT).show();
             startRecording();
@@ -292,10 +277,9 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
 
     /**
      * EMG & EDA Recording
-     *
      */
     private void startRecording() throws InterruptedException {
-        int[] actChan = new int[]{0,3,4};
+        int[] actChan = new int[]{0, 1};
         final BitalinoAndroidDevice bdev = new BitalinoAndroidDevice(MainActivity.MAC_ADDRESS);
         bdev.connect(Const.DEFAULT_FREQ, actChan);
         bdev.start();
@@ -306,30 +290,23 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
             public void run() {
                 BITalinoFrame[] dataFrame = bdev.read(Const.N_FRAMES);
                 int sumMuscle = 0;
-                int sumZ = 0;
                 // int sumEDA = 0;
 
                 // ''O segredo esta na massa''
                 for (int i = 0; i < (dataFrame.length - 1); i++) {
                     // Log.i("BITALINO", dataFrame[i].stringAnalogDigital());
-                    sumMuscle += Math.abs(dataFrame[i+1].getAnalog(0) - dataFrame[i].getAnalog(0));
-                    Log.i("FRAME",
-                            String.valueOf(dataFrame[i+1].getAnalog(3))+
-                            String.valueOf(dataFrame[i+1].getAnalog(4))
-                            );
-                    // sumZ += Math.abs(dataFrame[i+1].getAnalog(3) - dataFrame[i].getAnalog(3));
-                    // sumEDA += Math.abs(dataFrame[i].getAnalog(1));
+                    sumMuscle += Math.abs(dataFrame[i + 1].getAnalog(0) - dataFrame[i].getAnalog(0));
+                    // sumEDA += Math.abs(dataFrame[i + 1].getAnalog(1) - dataFrame[i].getAnalog(1));
                 }
                 int meanMuscle = sumMuscle / (dataFrame.length - 1);
-                // final int meanEDA = sumEDA / dataFrame.length;
-                // EDA_ACCUMULATOR+=meanEDA;
+                    /* final int meanEDA = sumEDA / (dataFrame.length - 1);
+                    Const.EDA_ACCUMULATOR += meanEDA;
 
-                // Log.i("BITALINO MEAN MUSCLE", String.valueOf(meanMuscle));
-                /*Log.i("BITALINO MEAN EDA", String.valueOf(meanEDA));
-                if(PREVIOUS_MEAN_EDA==-1) {
-                    PREVIOUS_MEAN_EDA = meanEDA;
-                }*/
-                // Log.i("EIXO Z", String.valueOf(sumZ));
+                    Log.i("BITALINO MEAN MUSCLE", String.valueOf(meanMuscle));
+                    Log.i("BITALINO MEAN EDA", String.valueOf(meanEDA));
+                    if (Const.PREVIOUS_MEAN_EDA == -1) {
+                        Const.PREVIOUS_MEAN_EDA = meanEDA;
+                    }*/
 
                 // Stop/Play Logic
                 if (meanMuscle > Const.MUSCLE_PICK_MIN && meanMuscle < Const.MUSCLE_PICK_MAX) {
@@ -369,20 +346,22 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
                     }
                 }
 
-                /*if(COUNTER_EDA==150) {
-                    EDA_ACCUMULATOR = EDA_ACCUMULATOR / 150;
-                    double newEnergy = functioningMode.songSelection(EDA_ACCUMULATOR, PREVIOUS_MEAN_EDA, GLOBAL_ENERGY);
-                    GLOBAL_ENERGY = (float)newEnergy;
-                    if(isMusicPlaying) {
-                        Log.d("ENERGY", "newEnergy: "+newEnergy);
-                        findTheRightSong(newEnergy);
-                        PREVIOUS_MEAN_EDA = meanEDA;
-                        COUNTER_EDA = 0;
-                        EDA_ACCUMULATOR = 0;
-                    } else {
-                        COUNTER_EDA=0; EDA_ACCUMULATOR=0;
-                    }
-                } else COUNTER_EDA++;*/
+                // This code concerns EDA
+                    /*if (Const.COUNTER_EDA == 150) {
+                        Const.EDA_ACCUMULATOR = Const.EDA_ACCUMULATOR / 150;
+                        double newEnergy = functioningMode.songSelection(Const.EDA_ACCUMULATOR, Const.PREVIOUS_MEAN_EDA, Const.GLOBAL_ENERGY);
+                        Const.GLOBAL_ENERGY = (float) newEnergy;
+                        if (isMusicPlaying) {
+                            Log.d("ENERGY", "newEnergy: " + newEnergy);
+                            findTheRightSong(newEnergy);
+                            Const.PREVIOUS_MEAN_EDA = meanEDA;
+                            Const.COUNTER_EDA = 0;
+                            Const.EDA_ACCUMULATOR = 0;
+                        } else {
+                            Const.COUNTER_EDA = 0;
+                            Const.EDA_ACCUMULATOR = 0;
+                        }
+                    } else Const.COUNTER_EDA++;*/
 
                 h.postDelayed(this, Const.DELAY);
             }
@@ -393,39 +372,53 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
     public void findTheRightSong(double newEnergy) {
         double maxDiffNegative = 0;
         double minDiffPositive = 1000;
-        String song = Const.CURRENT_SONG;
+        String song = tracksManager.getCurrentTrackID();
 
         if (SelectModeActivity.PLAYER_MODE.equals(SelectModeActivity.BEAST_MODE)) {
             for (Map.Entry<String, Double> entry : tracksManager.getTracksEnergy().entrySet()) {
-                if (!entry.getKey().equals(Const.CURRENT_SONG)) {
+                if (!entry.getKey().equals(tracksManager.getCurrentTrackID())) {
                     double diff = newEnergy - entry.getValue();
                     if (diff < minDiffPositive) {
                         minDiffPositive = diff;
                         song = entry.getKey();
-                        Log.i("BITALINO BEAST", Const.CURRENT_SONG);
+                        Log.i("BITALINO BEAST", tracksManager.getCurrentTrackID());
                     }
                 }
             }
         } else if (SelectModeActivity.PLAYER_MODE.equals(SelectModeActivity.RELAX_MODE)) {
             for (Map.Entry<String, Double> entry : tracksManager.getTracksEnergy().entrySet()) {
-                if (!entry.getKey().equals(Const.CURRENT_SONG)) {
+                if (!entry.getKey().equals(tracksManager.getCurrentTrackID())) {
                     double diff = entry.getValue() - newEnergy;
                     if (diff > maxDiffNegative) {
                         maxDiffNegative = diff;
                         song = entry.getKey();
-                        Log.i("BITALINO RELAX", Const.CURRENT_SONG);
+                        Log.i("BITALINO RELAX", tracksManager.getCurrentTrackID());
                     }
                 }
             }
         }
 
-        if (!Const.CURRENT_SONG.equals(song)) {
-            Const.CURRENT_SONG = song;
+        if (!tracksManager.getCurrentTrackID().equals(song)) {
             tracksManager.setCurrentTrack(song);
-            try {
-                changeTrack("EDA_ACTION");
-            } catch (IOException e) {
-                e.printStackTrace();
+            tracksManager.setCurrentTrack(song);
+            changeTrack("EDA_ACTION");
+        }
+    }
+
+    /**
+     * Simple algorithm to choose the best song to start with.
+     *
+     * @param tm an initialized trackmanager instance.
+     */
+    public static void chooseFirstTrack(TracksManager tm) {
+        int min = 10000;
+        for (Map.Entry<String, Double> entry : tm.getTracksEnergy().entrySet()) {
+            int diff = (int) Math.abs(entry.getValue() - Const.GLOBAL_ENERGY);
+
+            if (diff < min) {
+                min = diff;
+                Const.CURRENT_SONG = entry.getKey();
+                tm.setCurrentTrack(entry.getKey());
             }
         }
     }

@@ -1,8 +1,5 @@
 package com.player.mood.moodplayer.bitalino;
 
-import com.player.mood.moodplayer.MainActivity;
-import com.player.mood.moodplayer.bitalino.deviceandroid.BitalinoAndroidDevice;
-
 /**
  * This class holds some constants for proper and customized
  * configuration of the bitalino device.
@@ -26,9 +23,9 @@ public class Const {
 
     // Bitalino environment configuration
     public static float GLOBAL_ENERGY;
-    private static int PREVIOUS_MEAN_EDA=-1;
-    private static int EDA_PICK = 900;
-    private static int COUNTER_EDA=0;
-    private static int EDA_ACCUMULATOR=0;
+    public static int PREVIOUS_MEAN_EDA=-1;
+    public static int EDA_PICK = 900;
+    public static int COUNTER_EDA=0;
+    public static int EDA_ACCUMULATOR=0;
     public static String CURRENT_SONG;
 }
