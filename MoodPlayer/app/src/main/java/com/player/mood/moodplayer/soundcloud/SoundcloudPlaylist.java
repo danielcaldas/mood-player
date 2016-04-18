@@ -3,22 +3,20 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+ 
 package com.player.mood.moodplayer.soundcloud;
-
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import java.util.ArrayList;
 
 /**
  *
  * @author Cortez
  */
 public class SoundcloudPlaylist {
-    
+
     private JSONObject obj;
 
     public SoundcloudPlaylist(JSONObject obj){
@@ -45,7 +43,7 @@ public class SoundcloudPlaylist {
         }
         return result;
     }
-    
+
     private String filterTitle (String title){
         if (title.contains("-")){
             String[] tokens = title.split("-");

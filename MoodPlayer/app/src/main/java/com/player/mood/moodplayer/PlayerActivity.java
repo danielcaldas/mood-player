@@ -26,7 +26,6 @@ import com.player.mood.moodplayer.funcmode.RelaxedMode;
 import com.player.mood.moodplayer.soundcloud.SoundCloudLocationURLsAsyncFetcher;
 import com.player.mood.moodplayer.soundcloud.SoundCloudPlayListAsyncFetcher;
 import com.player.mood.moodplayer.soundcloud.SoundcloudAPI;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,6 +49,21 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
     public static boolean BiTALINO_ON = true;
 
     // Layout
+    private static float GLOBAL_ENERGY;
+    private static int PREVIOUS_MEAN_EDA=-1;
+
+    private FuncMode functioningMode;
+
+    private static int EDA_PICK = 900;
+
+    private static int COUNTER_EDA=0;
+    private static int EDA_ACCUMULATOR=0;
+
+    private static String DEFAULT_MUSIC_TITLE = "Just squeeze your arm!";
+    private static String CURRENT_SONG;
+    private static String SONG_SOURCE = "Soundcloud";
+
+    // View
     private ImageButton playStopButton;
     private ImageButton nextButton;
     private ImageButton previousButton;
@@ -404,6 +418,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnP
             changeTrack("EDA_ACTION");
         }
     }
+
 
     /**
      * Simple algorithm to choose the best song to start with.

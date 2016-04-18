@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+ 
 package com.player.mood.moodplayer.soundcloud;
 
 /**
@@ -17,7 +18,7 @@ public class SoundcloudTrack {
     private String streamURL;
     private String locationURL;
     private long duration;
-    
+
     public SoundcloudTrack(String id, String artist, String title, String streamURL, long duration){
         this.id = id;
         this.title = title;
