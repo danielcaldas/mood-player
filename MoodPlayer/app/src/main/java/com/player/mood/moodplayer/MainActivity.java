@@ -1,24 +1,41 @@
 package com.player.mood.moodplayer;
 
 import android.content.Intent;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.Toast;
 
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
 import java.util.regex.Matcher;
 
 import java.util.regex.Pattern;
 
+/**
+ * Main activity contains the land page of the app.
+ *
+ * @author jdc
+ * @date 2016.04.14
+ */
 public class MainActivity extends AppCompatActivity {
 
     public static String MAC_ADDRESS;
@@ -40,12 +57,12 @@ public class MainActivity extends AppCompatActivity {
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                // UNMARK FOR CONNECT TO BITALINO
                 String macAdd = macAddress.getText().toString();
                 boolean isValid = isMacAddressValid(macAdd);
 
                 if(isValid) {
-                    /*Start MoodPlayer*/
+                    // Start MoodPlayer
                     Intent i = new Intent(MainActivity.this, SelectModeActivity.class);
                     startActivity(i);
                     MAC_ADDRESS = macAdd;
@@ -54,7 +71,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
     }
 
     /**
@@ -96,4 +112,5 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
 }

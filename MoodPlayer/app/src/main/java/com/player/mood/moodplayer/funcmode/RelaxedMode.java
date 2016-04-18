@@ -1,8 +1,11 @@
 package com.player.mood.moodplayer.funcmode;
 
 /**
+ * This class encapsulates the algorithm RelaxedMode to choose songs
+ * using EDA values.
  *
  * @author Cortez
+ * @date 2016.03.11
  */
 public class RelaxedMode implements FuncMode{
 
